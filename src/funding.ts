@@ -1,44 +1,4 @@
-import axios from 'axios';
-import dotenv from 'dotenv';
-import { sha256, sha512 } from '@noble/hashes/sha2';
-import { hmac } from '@noble/hashes/hmac';
-import { base64 } from '@scure/base';
-import { nextNonce } from './utils/nonce';
-
-dotenv.config();
-
-const API_URL = 'https://api.kraken.com';
-
-// ---- Schlüssel prüfen ----------------------------------------------------
-const KEY = process.env.KRAKEN_API_KEY;
-const SECRET = process.env.KRAKEN_API_SECRET;
-if (!KEY || !SECRET) {
-    console.error('[Fehler] API-Schlüssel fehlen (.env prüfen)');
-    process.exit(1);
-}
-
-// ---- Signaturhilfe -------------------------------------------------------
-function sign(path: string, params: URLSearchParams, secretB64: string) {
-    const nonce = params.get('nonce')!;
-    const hash = sha256(new TextEncoder().encode(nonce + params.toString()));
-    const msg = new Uint8Array([...new TextEncoder().encode(path), ...hash]);
-
-    const sig = hmac(sha512, base64.decode(secretB64), msg);
-    return base64.encode(sig);
-}
-
-// ---- Generischer POST-Call ----------------------------------------------
-async function krakenPost(path: string) {
-    const params = new URLSearchParams({ nonce: nextNonce() });
-    const headers = {
-        'API-Key': KEY!,
-        'API-Sign': sign(path, params, SECRET!),
-        'Content-Type': 'application/x-www-form-urlencoded'
-    };
-    const { data } = await axios.post(API_URL + path, params, { headers });
-    if (data.error?.length) throw new Error(data.error.join('; '));
-    return data.result;
-}
+import { krakenPost } from './utils/kraken';
 
 // ---- Spezifische Aufrufe -------------------------------------------------
 function dt(ts: number) {
