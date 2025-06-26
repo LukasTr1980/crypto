@@ -1,7 +1,13 @@
 # .github/workflows/gitleaks.yml
 
 name: gitleaks
-on: [push, pull_request]
+
+on:
+  pull_request:
+  
+  push:
+    branches: [ master ]
+
 jobs:
     scan:
         permissions:
@@ -21,7 +27,7 @@ jobs:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Upload Sarif
-              if: always()
+              if: github.event_name == 'pull_request'
               uses: github/codeql-action/upload-sarif@v3
               with:
                 sarif_file: results.sarif
