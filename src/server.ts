@@ -15,7 +15,7 @@ app.get('/api/funding', async (req, res) => {
     }
 });
 
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
