@@ -1,4 +1,20 @@
+import { time } from 'console';
 import { krakenPost } from './utils/kraken';
+
+export interface FundingItem {
+    time: string;
+    asset: string;
+    amount: number;
+    fee: number;
+    net: number;
+}
+
+export interface FundingResult {
+    items: FundingItem[];
+    gross: number;
+    feeSum: number;
+    netTotal: number;
+}
 
 // ---- Spezifische Aufrufe -------------------------------------------------
 function dt(ts: number) {
@@ -16,52 +32,58 @@ function format(val: string | number): string {
     return Number(val).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-export async function showDeposits(): Promise<number> {
+export async function showDeposits(): Promise<FundingResult> {
     const res = await krakenPost('/0/private/DepositStatus');
     let gross = 0, feeSum = 0;
-    console.log('\n=== DEPOSIT ===');
 
-    res.forEach((d: any) => {
-        gross += Number(d.amount);
-        feeSum += Number(d.fee);
-        const net = Number(d.amount) - Number(d.fee);
-
-        console.log(
-            `${dt(d.time)} | ${d.asset} | `
-            + `Brutto ${format(d.amount)} | Fee ${format(d.fee)} | Netto ${format(net)}`
-        );
+    const items = res.map((d: any) => {
+        const amount = Number(d.amount);
+        const fee = Number(d.fee);
+        const net = amount - fee;
+        gross += amount;
+        feeSum += fee;
+        return {
+            time: dt(d.time),
+            asset: d.asset,
+            amount,
+            fee,
+            net,
+        } as FundingItem;
     });
 
     const netTotal = gross - feeSum;
-    console.log(
-        `» Summe Einzahlungen: Brutto ${format(gross)} ` +
-        `Gebühren ${format(feeSum)} Netto ${format(gross - feeSum)} ${res[0]?.asset || ''}\n`
-    );
-    return netTotal;
+    return {
+        items,
+        gross,
+        feeSum,
+        netTotal
+    };
 }
 
-export async function showWithdrawals(): Promise<number> {
+export async function showWithdrawals(): Promise<FundingResult> {
     const res = await krakenPost('/0/private/WithdrawStatus');
     let gross = 0, feeSum = 0;
-    console.log('\n=== WITHDRAWAL ===');
 
-    res.forEach((w: any) => {
-        gross += Number(w.amount);
-        feeSum += Number(w.fee);
-        const totalOut = Number(w.amount) + Number(w.fee);
-
-        console.log(
-            `${dt(w.time)} | ${w.asset} | `
-            + `Brutto ${format(w.amount)} | Fee ${format(w.fee)} | Gesamtbelastung ${format(totalOut)}`
-        );
+    const items = res.map((w: any) => {
+        const amount = Number(w.amount);
+        const fee = Number(w.fee);
+        const net = amount + fee;
+        gross += amount;
+        feeSum += fee;
+        return {
+            time: dt(w.time),
+            asset: w.asset,
+            amount,
+            fee,
+            net,
+        } as FundingItem;
     });
 
-    const netOut = gross + feeSum;
-
-    console.log(
-        `» Summe Auszahlungen: Brutto ${format(gross)} ` +
-        `Gebühren ${format(feeSum)} Gesamt ${format(gross + feeSum)} ${res[0]?.asset || ''}\n`
-    );
-
-    return netOut;
+    const netTotal = gross + feeSum;
+    return {
+        items,
+        gross,
+        feeSum,
+        netTotal
+    };
 }
