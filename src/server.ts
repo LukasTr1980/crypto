@@ -7,10 +7,8 @@ const port = process.env.PORT ?? 3000;
 
 app.get('/api/funding', async (req, res) => {
     try {
-        const [deposits, withdrawals] = await Promise.all([
-            showDeposits(),
-            showWithdrawals()
-        ]);
+        const deposits = await showDeposits();
+        const withdrawals = await showWithdrawals();
         res.json({ deposits, withdrawals });
     } catch (err: any) {
         console.error('[Funding API] ➜', err.message);
