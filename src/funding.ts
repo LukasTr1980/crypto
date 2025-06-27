@@ -28,10 +28,6 @@ function dt(ts: number) {
     }).replace(',', '');
 }
 
-function format(val: string | number): string {
-    return Number(val).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
 export async function showDeposits(): Promise<FundingResult> {
     const res = await krakenPost('/0/private/DepositStatus');
     let gross = 0, feeSum = 0;
