@@ -19,18 +19,32 @@ interface FundingResponse {
 }
 
 async function load() {
-    const res = await fetch('/api/funding');
-    const data: FundingResponse = await res.json();
     const el = document.getElementById('content');
     if (!el) {
         throw new Error('#content element not found');
     }
-    el.innerHTML = `
+
+    try {
+        const res = await fetch('/api/funding');
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.error ?? `HTTP ${res.status}`);
+        }
+
+        const data: FundingResponse = await res.json();
+
+        el.innerHTML = `
         <h2>Deposits</h2>
         <pre>${JSON.stringify(data.deposits, null, 2)}</pre>
         <h2>Withdrawals</h2>
         <pre>${JSON.stringify(data.withdrawals, null, 2)}</pre>
     `;
+    } catch (err: any) {
+        el.innerHTML = `<p style="color:red">Fehler: ${err.message}</p>`;
+        console.error(err);
+    }
 }
+
+load();
 
 load();
