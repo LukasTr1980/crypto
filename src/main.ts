@@ -1,5 +1,6 @@
 import { FundingResult } from './funding';
 import { TradeResult, CoinSummary } from './trade';
+import { fmt } from './utils/fmt';
 
 interface FundingResponse {
     deposits: FundingResult;
@@ -104,15 +105,15 @@ function renderCoinTable(list: CoinSummary[]) {
 
     const body = list.map(c => row([
         c.asset,
-        c.buyCost.toFixed(2),
-        c.buyVolume.toFixed(8),
-        c.avgBuyPrice?.toFixed(2) ?? '-',
-        c.sellProceeds.toFixed(2),
-        c.sellVolume.toFixed(8),
-        c.avgSellPrice?.toFixed(2) ?? '-',
-        c.netVolume.toFixed(8),
-        c.netSpend.toFixed(2),
-        c.feeTotal.toFixed(2)
+        fmt(c.buyCost, 2),
+        fmt(c.buyVolume, 8),
+        c.avgBuyPrice ? c.avgBuyPrice.toFixed(2) : '-',
+        fmt(c.sellProceeds, 2),
+        fmt(c.sellVolume, 8),
+        c.avgSellPrice ? c.avgSellPrice.toFixed(2) : '-',
+        fmt(c.netVolume, 8),
+        fmt(c.netSpend, 2),
+        fmt(c.feeTotal, 2)
     ], [1,2,3,4,5,6,7,8,9])).join('');
 
     return `<section><h2>Per-Coin Totals</h2><table><thead>${header}</thead><tbody>${body}</tbody></table></section>`;
