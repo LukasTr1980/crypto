@@ -1,4 +1,3 @@
-import { formatDate } from './utils/formatDate';
 import { FundingResult } from './funding';
 import { TradeResult } from './trade';
 
@@ -32,9 +31,9 @@ function renderFundingTable(result: FundingResult, caption: string) {
     const summary = row([
         '<strong>Total</strong>',
         '',
-        `<strong>${formatDate(result.gross)}</strong>`,
-        `<strong>${formatDate(result.feeSum)}</strong>`,
-        `<strong>${formatDate(result.netTotal)}</strong>`,
+        `<strong>${result.gross}</strong>`,
+        `<strong>${result.feeSum}</strong>`,
+        `<strong>${result.netTotal}</strong>`,
     ]);
 
     return `
@@ -79,9 +78,9 @@ function renderTradeTable(result: TradeResult, caption: string) {
             '',
             '',
             '',
-            `<strong>${formatDate(result.volumeTotal)}</strong>`,
-            `<strong>${formatDate(result.costTotal)}</strong>`,
-            `<strong>${formatDate(result.feeTotal)}</strong>`
+            `<strong>${result.volumeTotal}</strong>`,
+            `<strong>${result.costTotal}</strong>`,
+            `<strong>${result.feeTotal}</strong>`
         ],
         [4, 5, 6]
     );
