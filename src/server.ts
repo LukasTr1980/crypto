@@ -21,7 +21,7 @@ app.get('/api/trades', async (_req, res) => {
     try {
         const buys = await showBuys();
         const sells = await showSells();
-        res.json({ buys, sells })
+        res.json({ buys, sells });
     } catch (err: any) {
         console.error('[Trades API] ➜', err.message);
         res.status(500).json({ error: err.message });
@@ -30,7 +30,8 @@ app.get('/api/trades', async (_req, res) => {
 
 app.get('/api/coin-summary', async (_req, res) => {
     try {
-        res.json(await showCoinSummary());
+        const coinSummary = await showCoinSummary();
+        res.json(coinSummary);
     } catch (err: any) {
         console.error('[CoinSummary Api] ➜', err.message);
         res.status(500).json({ error: err.message });
