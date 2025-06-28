@@ -113,10 +113,10 @@ function renderCoinTable(list: CoinSummary[]) {
         c.asset,
         fmt(c.buyCost, 2),
         fmt(c.buyVolume, 8),
-        c.avgBuyPrice ? c.avgBuyPrice.toFixed(2) : '-',
+        c.avgBuyPrice ? fmt(c.avgBuyPrice, 2) : '-',
         fmt(c.sellProceeds, 2),
         fmt(c.sellVolume, 8),
-        c.avgSellPrice ? c.avgSellPrice.toFixed(2) : '-',
+        c.avgSellPrice ? fmt(c.avgSellPrice, 2) : '-',
         fmt(c.netVolume, 8),
         fmt(c.netSpend, 2),
         fmt(c.feeTotal, 2)
