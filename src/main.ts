@@ -1,23 +1,15 @@
 import { formatDate } from './utils/formatDate';
-
-interface FundingItem {
-    time: string;
-    asset: string;
-    amount: number;
-    fee: number;
-    net: number;
-}
-
-interface FundingResult {
-    items: FundingItem[];
-    gross: number;
-    feeSum: number;
-    netTotal: number;
-}
+import { FundingResult } from './funding';
+import { TradeResult } from './trade';
 
 interface FundingResponse {
     deposits: FundingResult;
     withdrawals: FundingResult;
+}
+
+interface TradeResponse {
+    buys: TradeResult;
+    sells: TradeResult;
 }
 
 function row(cells: (string | number)[], numIdx: number[] = []) {
@@ -26,7 +18,7 @@ function row(cells: (string | number)[], numIdx: number[] = []) {
         .join('')}</tr>`;
 }
 
-function renderTable(result: FundingResult, caption: string) {
+function renderFundingTable(result: FundingResult, caption: string) {
     const header =
         '<tr><th>Time</th><th>Asset</th>' +
         '<th class="num">Amount</th>' +
@@ -56,6 +48,55 @@ function renderTable(result: FundingResult, caption: string) {
     </section>`;
 }
 
+function renderTradeTable(result: TradeResult, caption: string) {
+    const header = 
+        '<tr><th>Time</th><th>Pair</th><th>Side</th>' +
+        '<th class="num">Price</th>' +
+        '<th class="num">Volume</th>' +
+        '<th class="num">Cost</th>' +
+        '<th class="num">Fee</th></tr>';
+
+    const body = result.items
+        .map(t => 
+            row(
+                [
+                    t.time,
+                    t.pair,
+                    t.type.toUpperCase(),
+                    t.price,
+                    t.volume,
+                    t.cost,
+                    t.fee,
+                ],
+                [3, 4, 5, 6]
+            )
+        )
+        .join('');
+    
+    const summary = row(
+        [
+            '<strong>Total</strong>',
+            '',
+            '',
+            '',
+            `<strong>${formatDate(result.volumeTotal)}</strong>`,
+            `<strong>${formatDate(result.costTotal)}</strong>`,
+            `<strong>${formatDate(result.feeTotal)}</strong>`
+        ],
+        [4, 5, 6]
+    );
+
+    return `
+    <section>
+        <h2>${caption}</h2>
+        <table>
+            <thead>${header}</thead>
+            <tbody>${body}</tbody>
+            <tfoot>${summary}</tfoot>
+        </table>
+    </section>`;
+}
+
 async function load() {
     const el = document.getElementById('content');
     if (!el) {
@@ -63,20 +104,37 @@ async function load() {
     }
 
     try {
-        const res = await fetch('/api/funding');
-        if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body.error ?? `HTTP ${res.status}`);
+        const fundingRes = await fetch('/api/funding');
+        if (!fundingRes.ok) {
+            const body = await fundingRes.json().catch(() => ({}));
+            throw new Error (body.error ?? `HTTP ${fundingRes.status}`);
         }
-        const data: FundingResponse = await res.json();
 
-        el.innerHTML =
-            renderTable(data.deposits, 'Deposits') +
-            renderTable(data.withdrawals, 'Withdrawals');
+        const funding: FundingResponse = await fundingRes.json();
+
+        el.innerHTML = 
+            renderFundingTable(funding.deposits, 'Deposits') + 
+            renderFundingTable(funding.withdrawals, 'Withdrawals') +
+            '<p id=\"trade-loading\">Loading Trades ...</p>';
+
+        const tradesRes = await fetch('/api/trades');
+        if (!tradesRes.ok) {
+            const body = await tradesRes.json().catch(() => ({}));
+            throw new Error (body.error ?? `HTTP ${tradesRes.status}`);
+        }
+
+        const trades: TradeResponse = await tradesRes.json();
+
+        el.innerHTML = 
+            renderFundingTable(funding.deposits, 'Deposits') +
+            renderFundingTable(funding.withdrawals, 'Withdrawals') +
+            renderTradeTable(trades.buys, 'Buys') + 
+            renderTradeTable(trades.sells, 'Sells');
     } catch (err: any) {
         el.innerHTML = `<p style="color:red">Fehler: ${err.message}</p>`;
         console.error(err);
     }
+
 }
 
 load();

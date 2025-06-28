@@ -1,4 +1,4 @@
-import { time } from 'console';
+import { dt } from './utils/dt';
 import { krakenPost } from './utils/kraken';
 
 export interface FundingItem {
@@ -14,18 +14,6 @@ export interface FundingResult {
     gross: number;
     feeSum: number;
     netTotal: number;
-}
-
-// ---- Spezifische Aufrufe -------------------------------------------------
-function dt(ts: number) {
-    return new Date(ts * 1000).toLocaleString('de-DE', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    }).replace(',', '');
 }
 
 export async function showDeposits(): Promise<FundingResult> {
