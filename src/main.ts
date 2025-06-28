@@ -57,10 +57,10 @@ function renderFundingTable(result: FundingResult, caption: string) {
 function renderTradeTable(result: TradeResult, caption: string) {
     const header = 
         '<tr><th>Time</th><th>Pair</th><th>Side</th>' +
-        '<th class="num">Price</th>' +
+        '<th class="num">Price €</th>' +
         '<th class="num">Volume</th>' +
-        '<th class="num">Cost</th>' +
-        '<th class="num">Fee</th></tr>';
+        '<th class="num">Cost €</th>' +
+        '<th class="num">Fee €</th></tr>';
 
     const body = result.items
         .map(t => 
@@ -69,10 +69,10 @@ function renderTradeTable(result: TradeResult, caption: string) {
                     t.time,
                     t.pair,
                     t.type.toUpperCase(),
-                    t.price,
-                    t.volume,
-                    t.cost,
-                    t.fee,
+                    fmtEuro(t.price, 2),
+                    fmt(t.volume, 8),
+                    fmtEuro(t.cost, 2),
+                    fmtEuro(t.fee, 2),
                 ],
                 [3, 4, 5, 6]
             )
@@ -85,9 +85,9 @@ function renderTradeTable(result: TradeResult, caption: string) {
             '',
             '',
             '',
-            `<strong>${result.volumeTotal}</strong>`,
-            `<strong>${result.costTotal}</strong>`,
-            `<strong>${result.feeTotal}</strong>`
+            `<strong>${fmt(result.volumeTotal, 8)}</strong>`,
+            `<strong>${fmtEuro(result.costTotal, 2)}</strong>`,
+            `<strong>${fmtEuro(result.feeTotal, 8)}</strong>`
         ],
         [4, 5, 6]
     );
