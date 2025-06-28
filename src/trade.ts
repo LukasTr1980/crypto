@@ -34,7 +34,7 @@ export interface CoinSummary {
 
 function parseAsset(pair: string): string {
     const base = pair.replace(/ZEUR$|EUR$/i, '');
-    return base.replace(/^[XZ]/, '');
+    return base.length > 3 && base.startsWith('X') ? base.slice(1) : base;
 }
 
 async function laodTradesRaw() {
