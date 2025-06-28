@@ -1,5 +1,5 @@
 import { FundingResult } from './funding';
-import { TradeResult } from './trade';
+import { TradeResult, CoinSummary } from './trade';
 
 interface FundingResponse {
     deposits: FundingResult;
@@ -96,6 +96,29 @@ function renderTradeTable(result: TradeResult, caption: string) {
     </section>`;
 }
 
+function renderCoinTable(list: CoinSummary[]) {
+    const header = 
+        '<tr><th>Coin</th><th class=\"num\">Buy EUR</th><th class=\"num\">Buy Vol</th>' +
+        '<th class\"num\">Ø Buy</th><th class=\"num\">Sell EUR</th><th class=\"num\">Sell Vol</th>' +
+        '<th class=\"num\">Ø Sell</th><th class=\"num\">Net Vol</th><th class=\"num\">Net EUR</th>' +
+        '<th class=\"num\">Fees</th></tr>';
+
+    const body = list.map(c => row([
+        c.asset,
+        c.buyCost.toFixed(2),
+        c.buyVolume.toFixed(8),
+        c.avgBuyPrice?.toFixed(2) ?? '-',
+        c.sellProceeds.toFixed(2),
+        c.sellVolume.toFixed(8),
+        c.avgSellPrice?.toFixed(2) ?? '-',
+        c.netVolume.toFixed(8),
+        c.netSpend.toFixed(2),
+        c.feeTotal.toFixed(2)
+    ], [1,2,3,4,5,6,7,8,9])).join('');
+
+    return `<section><h2>Per-Coin Totals</h2><table><thead>${header}</thead><tbody>${body}</tbody></table></section>`;
+}
+
 async function load() {
     const el = document.getElementById('content');
     if (!el) {
@@ -129,6 +152,18 @@ async function load() {
             renderFundingTable(funding.withdrawals, 'Withdrawals') +
             renderTradeTable(trades.buys, 'Buys') + 
             renderTradeTable(trades.sells, 'Sells');
+        
+        const summaryRes = await fetch('/api/coin-summary');
+        const summary: CoinSummary[] = await summaryRes.json();
+
+        el.innerHTML = 
+            renderFundingTable(funding.deposits, 'Deposits') +
+            renderFundingTable(funding.withdrawals, 'Withdrawals') +
+            renderTradeTable(trades.buys, 'Buys') + 
+            renderTradeTable(trades.sells, 'Sells') +
+            renderCoinTable(summary);
+
+
     } catch (err: any) {
         el.innerHTML = `<p style="color:red">Fehler: ${err.message}</p>`;
         console.error(err);
