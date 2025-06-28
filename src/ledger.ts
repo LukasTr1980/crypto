@@ -32,7 +32,7 @@ export async function getInstantBuys(): Promise<InstantTrade[]> {
             asset: mapKrakenAsset(receive.asset),
             volume,
             cost,
-            price: cost / volume,
+            price: Number((cost / volume).toFixed(8)),
             refid: receive.refid,
         }];
     });
