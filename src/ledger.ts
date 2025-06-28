@@ -22,7 +22,7 @@ export async function getInstantBuys(): Promise<InstantTrade[]> {
     });
 
     return Object.values(buckets).flatMap(g => {
-        const spend = g.find(x => x.type === 'spend' && ['EUR', 'ZEUR'].includes(x.asset));
+        const spend = g.find(x => x.type === 'spend' && ['EUR', 'ZEUR'].includes(x.asset) && Number(x.amount) < 0);
         const receive = g.find(x => x.type === 'receive' && x.asset !== 'EUR');
         if (!spend || !receive) return [];
         const cost = Math.abs(Number(spend.amount));
