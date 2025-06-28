@@ -5,3 +5,8 @@ export function fmt(n: number, digits = 2): string {
         maximumFractionDigits: digits,
     }).format(n);
 }
+
+export function fmtEuro(n: number, d = 2) {
+    return n === 0 ? '-' :
+        '€ ' + fmt(n, d);
+}

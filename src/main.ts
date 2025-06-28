@@ -1,6 +1,6 @@
 import { FundingResult } from './funding';
 import { TradeResult, CoinSummary } from './trade';
-import { fmt } from './utils/fmt';
+import { fmt, fmtEuro } from './utils/fmt';
 
 interface FundingResponse {
     deposits: FundingResult;
@@ -104,22 +104,29 @@ function renderTradeTable(result: TradeResult, caption: string) {
 
 function renderCoinTable(list: CoinSummary[]) {
     const header = 
-        '<tr><th>Coin</th><th class=\"num\">Buy EUR</th><th class=\"num\">Buy Vol</th>' +
-        '<th class=\"num\">Ø Buy</th><th class=\"num\">Sell EUR</th><th class=\"num\">Sell Vol</th>' +
-        '<th class=\"num\">Ø Sell</th><th class=\"num\">Net Vol</th><th class=\"num\">Net EUR</th>' +
-        '<th class=\"num\">Fees</th><th class=\"num\">Coin Fee</th></tr>';
+        '<tr><th>Coin</th>' +
+        '<th class="num">Buy €</th>' +
+        '<th class="num">Buy (Coin)</th>' +
+        '<th class="num">Ø Buy €/Coin</th>' +
+        '<th class="num">Sell €</th>' +
+        '<th class="num">Sell (Coin)</th>' +
+        '<th class="num">Ø Sell €/Coin</th>' +
+        '<th class="num">Net (Coin)</th>' +
+        '<th class="num">Net €</th>' +
+        '<th class="num">Fees €</th>' +
+        '<th class="num">Fees (Coin)</th></tr>';
 
     const body = list.map(c => row([
         c.asset,
-        fmt(c.buyCost, 2),
+        fmtEuro(c.buyCost, 2),
         fmt(c.buyVolume, 8),
         c.avgBuyPrice ? fmt(c.avgBuyPrice, 2) : '-',
-        fmt(c.sellProceeds, 2),
+        fmtEuro(c.sellProceeds, 2),
         fmt(c.sellVolume, 8),
         c.avgSellPrice ? fmt(c.avgSellPrice, 2) : '-',
         fmt(c.netVolume, 8),
-        fmt(c.netSpend, 2),
-        fmt(c.feeTotal, 2),
+        fmtEuro(c.netSpend, 2),
+        fmtEuro(c.feeTotal, 2),
         fmt(c.coinFee, 8)
     ], [1,2,3,4,5,6,7,8,9,10])).join('');
 
