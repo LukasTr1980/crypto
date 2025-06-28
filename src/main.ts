@@ -26,15 +26,21 @@ function renderFundingTable(result: FundingResult, caption: string) {
         '<th class="num">Net</th></tr>';
 
     const body = result.items
-        .map(i => row([i.time, i.asset, i.amount, i.fee, i.net], [2, 3, 4]))
+        .map(i => row([
+            i.time,
+            i.asset,
+            fmt(i.amount, 2),
+            fmt(i.fee, 2),
+            fmt(i.net, 2)
+        ], [2,3,4]))
         .join('');
 
     const summary = row([
         '<strong>Total</strong>',
         '',
-        `<strong>${result.gross}</strong>`,
-        `<strong>${result.feeSum}</strong>`,
-        `<strong>${result.netTotal}</strong>`,
+        `<strong>${fmt(result.gross, 2)}</strong>`,
+        `<strong>${fmt(result.feeSum, 2)}</strong>`,
+        `<strong>${fmt(result.netTotal, 2)}</strong>`,
     ]);
 
     return `
