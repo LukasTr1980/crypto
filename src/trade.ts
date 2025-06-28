@@ -1,6 +1,7 @@
 import { krakenPost } from "./utils/kraken";
 import { dt } from "./utils/dt";
 import { getInstantBuys, InstantTrade } from "./ledger";
+import { mapKrakenAsset } from "./utils/assetMapper";
 
 export interface TradeItem {
     time: string;
@@ -33,49 +34,29 @@ export interface CoinSummary {
     feeTotal: number;
 }
 
-function parseAsset(pair: string): string{
-    let code = pair.replace(/ZEUR$|EUR$/i, '');
-
-    if (code.length > 3 && /^[XZ]/.test(code)) code = code.slice(1);
-
-    const map: Record<string, string> = {
-        XBT: 'BTC',
-        XDG: 'DOGE',
-    };
-
-    return map[code] ?? code;
-}
-
 async function laodTradesRaw() {
     const res = await krakenPost('/0/private/TradesHistory');
     return Object.values(res.trades ?? {}) as any[];    
 }
 
 function mapTrade(raw: any): TradeItem {
-    const volume = Number(raw.vol);
-    const cost = Number(raw.cost);
-    const fee = Number(raw.fee);
-    const price = Number(raw.price);
-    const pair = raw.pair;
-    const asset = parseAsset(pair);
-
     return {
         time: dt(raw.time),
-        asset,
-        pair,
+        asset: mapKrakenAsset(raw.pair),
+        pair: raw.pair,
         type: raw.type,
-        price,
-        volume,
-        cost,
-        fee,
+        price: Number(raw.price),
+        volume: Number(raw.vol),
+        cost: Number(raw.cost),
+        fee: Number(raw.fee)
     };
 }
 
 function convertInstant(i: InstantTrade): TradeItem {
     return {
         time: i.time,
-        asset: i.asset,
-        pair: `${i.asset}EUR`,
+        asset: mapKrakenAsset(i.asset),
+        pair: `${mapKrakenAsset(i.asset)}EUR`,
         type: 'buy',
         price: i.price,
         volume: i.volume,
@@ -132,7 +113,7 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
     }
 
     for (const r of proRows) {
-        const asset = parseAsset(r.pair);
+        const asset = mapKrakenAsset(r.pair);
         const b = ensure(asset);
         const vol = Number(r.vol);
         const cost = Number(r.cost);

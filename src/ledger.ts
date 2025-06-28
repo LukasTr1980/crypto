@@ -1,5 +1,6 @@
 import { krakenPost } from "./utils/kraken";
 import { dt } from "./utils/dt";
+import { mapKrakenAsset } from "./utils/assetMapper";
 
 export interface InstantTrade {
     time: string;
@@ -28,7 +29,7 @@ export async function getInstantBuys(): Promise<InstantTrade[]> {
         const volume = Number(receive.amount);
         return [{
             time: dt(receive.time),
-            asset: receive.asset.replace(/^X|Z/, ''),
+            asset: mapKrakenAsset(receive.asset),
             volume,
             cost,
             price: cost / volume,
