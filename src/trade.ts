@@ -32,6 +32,7 @@ export interface CoinSummary {
     netVolume: number;
     netSpend: number;
     feeTotal: number;
+    coinFee: number;
 }
 
 async function laodTradesRaw() {
@@ -111,6 +112,7 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
             netVolume: 0,
             netSpend: 0,
             feeTotal: 0,
+            coinFee: 0,
     }
 
     for (const r of proRows) {
@@ -139,6 +141,7 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
         const b = ensure(f.asset);
         b.buyVolume -= f.volume;
         b.feeTotal += f.volume;
+        b.coinFee += f.volume;
     }
 
     for (const b of Object.values(bucket)) {
