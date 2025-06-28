@@ -33,9 +33,17 @@ export interface CoinSummary {
     feeTotal: number;
 }
 
-function parseAsset(pair: string): string {
-    const base = pair.replace(/ZEUR$|EUR$/i, '');
-    return base.length > 3 && base.startsWith('X') ? base.slice(1) : base;
+function parseAsset(pair: string): string{
+    let code = pair.replace(/ZEUR$|EUR$/i, '');
+
+    if (code.length > 3 && /^[XZ]/.test(code)) code = code.slice(1);
+
+    const map: Record<string, string> = {
+        XBT: 'BTC',
+        XDG: 'DOGE',
+    };
+
+    return map[code] ?? code;
 }
 
 async function laodTradesRaw() {
