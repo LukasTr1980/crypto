@@ -91,7 +91,6 @@ function renderTradeTable(result: TradeResult, caption: string) {
         <table>
             <thead>${header}</thead>
             <tbody>${body}</tbody>
-            <tfoot>${summary}</tfoot>
         </table>
     </section>`;
 }
