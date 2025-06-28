@@ -99,7 +99,7 @@ function renderTradeTable(result: TradeResult, caption: string) {
 function renderCoinTable(list: CoinSummary[]) {
     const header = 
         '<tr><th>Coin</th><th class=\"num\">Buy EUR</th><th class=\"num\">Buy Vol</th>' +
-        '<th class\"num\">Ø Buy</th><th class=\"num\">Sell EUR</th><th class=\"num\">Sell Vol</th>' +
+        '<th class=\"num\">Ø Buy</th><th class=\"num\">Sell EUR</th><th class=\"num\">Sell Vol</th>' +
         '<th class=\"num\">Ø Sell</th><th class=\"num\">Net Vol</th><th class=\"num\">Net EUR</th>' +
         '<th class=\"num\">Fees</th></tr>';
 
@@ -134,11 +134,6 @@ async function load() {
 
         const funding: FundingResponse = await fundingRes.json();
 
-        el.innerHTML = 
-            renderFundingTable(funding.deposits, 'Deposits') + 
-            renderFundingTable(funding.withdrawals, 'Withdrawals') +
-            '<p id=\"trade-loading\">Loading Trades ...</p>';
-
         const tradesRes = await fetch('/api/trades');
         if (!tradesRes.ok) {
             const body = await tradesRes.json().catch(() => ({}));
@@ -146,23 +141,18 @@ async function load() {
         }
 
         const trades: TradeResponse = await tradesRes.json();
-
-        el.innerHTML = 
-            renderFundingTable(funding.deposits, 'Deposits') +
-            renderFundingTable(funding.withdrawals, 'Withdrawals') +
-            renderTradeTable(trades.buys, 'Buys') + 
-            renderTradeTable(trades.sells, 'Sells');
         
         const summaryRes = await fetch('/api/coin-summary');
         const summary: CoinSummary[] = await summaryRes.json();
 
-        el.innerHTML = 
+        let html = 
             renderFundingTable(funding.deposits, 'Deposits') +
             renderFundingTable(funding.withdrawals, 'Withdrawals') +
-            renderTradeTable(trades.buys, 'Buys') + 
+            renderTradeTable(trades.buys, 'Buys') +
             renderTradeTable(trades.sells, 'Sells') +
             renderCoinTable(summary);
-
+        
+        el.innerHTML = html;
 
     } catch (err: any) {
         el.innerHTML = `<p style="color:red">Fehler: ${err.message}</p>`;
