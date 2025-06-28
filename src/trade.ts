@@ -1,6 +1,6 @@
 import { krakenPost } from "./utils/kraken";
 import { dt } from "./utils/dt";
-import { getInstantBuys, InstantTrade } from "./ledger";
+import { getInstantBuys, InstantTrade, getBaseFees, BaseFee } from "./ledger";
 import { mapKrakenAsset } from "./utils/assetMapper";
 
 export interface TradeItem {
@@ -65,6 +65,16 @@ function convertInstant(i: InstantTrade): TradeItem {
     };
 }
 
+function appendTotals(list: TradeItem[]): TradeResult {
+    let volumeTotal = 0, costTotal = 0, feeTotal = 0;
+    list.forEach(t => {
+        volumeTotal += t.volume;
+        costTotal += t.cost;
+        feeTotal += t.fee;
+    });
+    return { items: list, volumeTotal, costTotal, feeTotal };
+}
+
 export async function showBuys(): Promise<TradeResult> {
     const proRows = await laodTradesRaw();
     const proItems = proRows
@@ -74,31 +84,23 @@ export async function showBuys(): Promise<TradeResult> {
     const instantRows = await getInstantBuys();
     const instantItems = instantRows.map(convertInstant);
 
-    const items = [...proItems, ...instantItems];
-
-    let volumeTotal = 0, costTotal = 0, feeTotal = 0;
-    for (const t of items) {
-        volumeTotal += t.volume;
-        costTotal += t.cost;
-        feeTotal += t.fee;
-    }
-
-    return { items, volumeTotal, costTotal, feeTotal };
+    return appendTotals([...proItems, ...instantItems]);
 }
 
 export async function showSells(): Promise<TradeResult> {
-    const items = (await laodTradesRaw()).filter(t => t.type === 'sell').map(mapTrade);
-    let volumeTotal = 0, costTotal = 0, feeTotal = 0;
-    items.forEach(t => { volumeTotal += t.volume; costTotal += t.cost; feeTotal += t.fee });
-    return { items, volumeTotal, costTotal, feeTotal };
+    const items = (await laodTradesRaw())
+                    .filter(r => r.type === 'sell')
+                    .map(mapTrade);
+    return appendTotals(items);
 }
 
 export async function showCoinSummary(): Promise<CoinSummary[]> {
     const proRows = await laodTradesRaw();
-    const bucket: Record<string, CoinSummary> = {};
+    const instantRows = await getInstantBuys();
+    const baseFees = await getBaseFees();
 
-    function ensure(a: string): CoinSummary {
-        return bucket[a] ??= {
+    const bucket: Record<string, CoinSummary> = {};
+    const ensure = (a: string): CoinSummary => bucket[a] ??= {
             asset: a,
             buyVolume: 0,
             buyCost: 0,
@@ -109,7 +111,6 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
             netVolume: 0,
             netSpend: 0,
             feeTotal: 0,
-        };
     }
 
     for (const r of proRows) {
@@ -128,12 +129,17 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
         b.feeTotal += Number(r.fee);
     }
 
-    const instantRows = await getInstantBuys();
     for (const i of instantRows) {
         const b = ensure(i.asset);
         b.buyVolume += i.volume;
         b.buyCost += i.cost;
-    }    
+    }
+
+    for (const f of baseFees) {
+        const b = ensure(f.asset);
+        b.buyVolume -= f.volume;
+        b.feeTotal += f.volume;
+    }
 
     for (const b of Object.values(bucket)) {
         b.avgBuyPrice = b.buyVolume ? b.buyCost / b.buyVolume : null;

@@ -11,6 +11,13 @@ export interface InstantTrade {
     refid: string;
 }
 
+export interface BaseFee {
+    time: string;
+    asset: string;
+    volume: number;
+    refid: string;
+}
+
 export async function getInstantBuys(): Promise<InstantTrade[]> {
     const { ledger } = await krakenPost('/0/private/Ledgers');
     const rows = Object.values(ledger ?? {}) as any[];
@@ -36,4 +43,20 @@ export async function getInstantBuys(): Promise<InstantTrade[]> {
             refid: receive.refid,
         }];
     });
+}
+
+export async function getBaseFees(): Promise<BaseFee[]> {
+    const { ledger } = await krakenPost('/0/private/Ledgers');
+    return Object.values(ledger ?? {})
+        .filter((r: any) => 
+            r.type === 'trade' &&
+            r.fee && Number(r.fee) > 0 &&
+            r.asset !== 'EUR' && r.asset !== 'ZEUR'
+        )
+        .map((r: any) => ({
+            time: dt(r.time),
+            asset: mapKrakenAsset(r.asset.replace(/\\.\\w+$/, '')),
+            volume: Number(r.fee),
+            refid: r.refid
+        }));
 }
