@@ -18,6 +18,7 @@ export interface FundingResult {
 }
 
 export async function showDeposits(): Promise<FundingResult> {
+    info('[Funding] Fetching deposits');
     const res = await krakenPost('/0/private/DepositStatus');
     let gross = 0, feeSum = 0;
 
@@ -38,6 +39,7 @@ export async function showDeposits(): Promise<FundingResult> {
 
     const netTotal = gross - feeSum;
     info(`[Funding] Deposits loaded: ${items.length}`);
+    info(`[Funding] Deposits total net: ${netTotal}`);
     return {
         items,
         gross,
@@ -47,6 +49,7 @@ export async function showDeposits(): Promise<FundingResult> {
 }
 
 export async function showWithdrawals(): Promise<FundingResult> {
+    info('[Funding] Fetching withdrawals');
     const res = await krakenPost('/0/private/WithdrawStatus');
     let gross = 0, feeSum = 0;
 
@@ -67,6 +70,7 @@ export async function showWithdrawals(): Promise<FundingResult> {
 
     const netTotal = gross + feeSum;
     info(`[Funding] Withdrawals loaded: ${items.length}`);
+    info(`[Funding] Withdrawals total net: ${netTotal}`);
     return {
         items,
         gross,
