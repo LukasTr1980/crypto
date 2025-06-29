@@ -37,7 +37,9 @@ export interface CoinSummary {
 
 async function  loadTradesRaw() {
     const res = await krakenPost('/0/private/TradesHistory');
-    return Object.values(res.trades ?? {}) as any[];    
+    const rows = Object.values(res.trades ?? {}) as any[];
+    console.log(`[Trades] Loaded ${rows.length} trades from API`);
+    return rows;
 }
 
 function mapTrade(raw: any): TradeItem {
@@ -86,7 +88,7 @@ export async function showBuys(): Promise<TradeResult> {
 
     const instantRows = await getInstantBuys();
     const instantItems = instantRows.map(convertInstant);
-
+    console.log(`[Trades] Buys: ${proItems.length} pro, ${instantItems.length} instant`);
     return appendTotals([...proItems, ...instantItems]);
 }
 
@@ -94,6 +96,7 @@ export async function showSells(): Promise<TradeResult> {
     const items = (await  loadTradesRaw())
                     .filter(r => r.type === 'sell' && isEurPair(r.pair))
                     .map(mapTrade);
+    console.log(`[Trades] Sells loaded: ${items.length}`);
     return appendTotals(items);
 }
 

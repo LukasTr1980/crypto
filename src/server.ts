@@ -7,10 +7,12 @@ const app = express();
 const port = process.env.PORT ?? 3000;
 
 app.get('/api/funding', async (_req, res) => {
+    console.log('GET /api/funding');
     try {
         const deposits = await showDeposits();
         const withdrawals = await showWithdrawals();
         res.json({ deposits, withdrawals });
+        console.log('[Funding API] success');
     } catch (err: any) {
         console.error('[Funding API] ➜', err.message);
         res.status(500).json({ error: err.message });
@@ -18,10 +20,12 @@ app.get('/api/funding', async (_req, res) => {
 });
 
 app.get('/api/trades', async (_req, res) => {
+    console.log('GET /api/trades');
     try {
         const buys = await showBuys();
         const sells = await showSells();
         res.json({ buys, sells });
+        console.log('[Trades API] success');
     } catch (err: any) {
         console.error('[Trades API] ➜', err.message);
         res.status(500).json({ error: err.message });
@@ -29,9 +33,11 @@ app.get('/api/trades', async (_req, res) => {
 });
 
 app.get('/api/coin-summary', async (_req, res) => {
+    console.log('GET /api/coin-summary');
     try {
         const coinSummary = await showCoinSummary();
         res.json(coinSummary);
+        console.log('[CoinSummary API] success');
     } catch (err: any) {
         console.error('[CoinSummary Api] ➜', err.message);
         res.status(500).json({ error: err.message });

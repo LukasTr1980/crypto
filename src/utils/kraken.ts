@@ -32,7 +32,17 @@ export async function krakenPost(path: string) {
         'API-Sign': sign(path, params, SECRET!),
         'Content-Type': 'application/x-www-form-urlencoded'
     };
-    const { data } = await axios.post(API_URL + path, params, { headers });
-    if (data.error?.length) throw new Error(data.error.join('; '));
-    return data.result;
+
+    console.log(`[Kraken] POST ${path}`);
+    try {
+        const { data } = await axios.post(API_URL + path, params, { headers });
+        if (data.error?.length) {
+            console.error(`[Kraken] Error: ${data.error.join('; ')}`);
+            throw new Error(data.error.join('; '));
+        }
+        return data.result;
+    } catch (err: any) {
+        console.error(`[Kraken] Request failed: ${err.message}`);
+        throw err;
+    }
 }
