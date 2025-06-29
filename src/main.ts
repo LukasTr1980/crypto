@@ -119,6 +119,7 @@ function renderCoinTable(list: CoinSummary[]) {
         '<th class="num">Realised €</th>' +
         '<th class="num">Unrealised €</th>' +
         '<th class="num">Total P/L €</th>' +
+        '<th class="num">Total P/L %' +
         '<th class="num">Reward (Coin)' +
         '<th class="num">Price</th>' +
         '<th class="num">Quote TS</tr>';
@@ -135,6 +136,16 @@ function renderCoinTable(list: CoinSummary[]) {
             return formattedPl;
         };
 
+        const formatPlPercent = (plPercent: number | null): string => {
+            if (plPercent === null) {
+                return '-';
+            }
+            const formattedPercent = `${fmt(plPercent, 2)}%`;
+            if (plPercent > 0) return `<span class="gain">${formattedPercent}</span>`;
+            if (plPercent < 0) return `<span class="loss">${formattedPercent}</span>`;
+            return formattedPercent;
+        }
+
         return row([
             c.asset,
             fmtEuro(c.buyCost, 2),
@@ -149,12 +160,12 @@ function renderCoinTable(list: CoinSummary[]) {
             fmt(c.coinFee, 8),
             fmtEuro(c.realised, 2),
             fmtEuro(c.unrealised, 2),
-            // HIER WIRD DIE NEUE FUNKTION AUFGERUFEN
             formatPl(c.totalPL),
+            formatPlPercent(c.totalPLPercent),
             fmt(c.rewardVolume, 8),
             fmtEuro(c.priceNow, 2),
             c.priceTs || '-',
-        ], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+        ], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]);
     }).join('');
 
     return `<section><h2>Per-Coin Totals</h2><table><thead>${header}</thead><tbody>${body}</tbody></table></section>`;

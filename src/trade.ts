@@ -40,6 +40,7 @@ export interface CoinSummary {
     totalPL: number;
     priceNow: number;
     priceTs: string;
+    totalPLPercent: number | null;
 }
 
 async function loadTradesRaw() {
@@ -121,7 +122,24 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
 
     const bucket: Record<string, CoinSummary> = {};
     const ensure = (a: string): CoinSummary => bucket[a] ??= {
-        asset: a, buyVolume: 0, rewardVolume: 0, buyCost: 0, avgBuyPrice: null, sellVolume: 0, sellProceeds: 0, avgSellPrice: null, netVolume: 0, netSpend: 0, feeTotal: 0, coinFee: 0, realised: 0, unrealised: 0, totalPL: 0, priceNow: 0, priceTs: "",
+        asset: a, 
+        buyVolume: 0, 
+        rewardVolume: 0, 
+        buyCost: 0, 
+        avgBuyPrice: null, 
+        sellVolume: 0, 
+        sellProceeds: 0, 
+        avgSellPrice: null, 
+        netVolume: 0, 
+        netSpend: 0, 
+        feeTotal: 0, 
+        coinFee: 0, 
+        realised: 0, 
+        unrealised: 0, 
+        totalPL: 0, 
+        priceNow: 0, 
+        priceTs: "", 
+        totalPLPercent: null,
     };
 
     // --- Datensammlung (unverändert) ---
@@ -215,6 +233,17 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
         b.unrealised = b.netVolume * b.priceNow;
         b.realised = -b.netSpend;
         b.totalPL = b.realised + b.unrealised;
+    }
+
+    for (const b of Object.values(bucket)) {
+        b.realised = -b.netSpend;
+        b.totalPL = b.realised + b.unrealised;
+
+        if (b.buyCost > 0) {
+            b.totalPLPercent = (b.totalPL / b.buyCost) * 100;
+        } else {
+            b.totalPLPercent = null;
+        }
     }
     
     return Object.values(bucket).sort((a, b) => a.asset.localeCompare(b.asset));
