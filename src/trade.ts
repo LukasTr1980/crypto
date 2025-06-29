@@ -204,7 +204,7 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
             priceTimestamp = priceResp[internalPair]?.ts ?? '';
         }
         b.priceNow = currentPrice;
-        b.priceTs = priceTimestamp;
+        b.priceTs = priceTimestamp ? dt(new Date(priceTimestamp).getTime() / 1000) : '';
         b.unrealised = b.netVolume * b.priceNow;
         b.realised = -b.netSpend;
         b.totalPL = b.realised + b.unrealised;
