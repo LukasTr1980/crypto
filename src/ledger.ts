@@ -69,12 +69,20 @@ export function getBaseFees(ledgerRows: any[]): BaseFee[] {
 
 export function getRewards(ledgerRows: any[]): RewardItem[] {
     info('[Ledger] getRewards start');
-    return ledgerRows
+    const rewards = ledgerRows
         .filter((r: any) => (r.type === "reward" || r.subtype === "reward") && Number(r.amount) > 0)
-        .map((r: any) => ({
+        .map((r: any) => {
+            const amount = Number(r.amount);
+            const fee = Number(r.fee);
+            const netVolume = amount -fee;
+
+            return {
             time: dt(r.time),
             asset: mapKrakenAsset(r.asset),
-            volume: Number(r.amount),
+            volume: netVolume,
             refid: r.refid,
-        }));
+            }
+        });
+    info(`[Ledger] Found ${rewards.length} reward items (inlc. Earn Rewards).`);
+    return rewards;
 }
