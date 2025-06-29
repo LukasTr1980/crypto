@@ -1,5 +1,5 @@
 const nativeConsoleLog = console.log;
-const nativeConsoleError = console.log;
+const nativeConsoleError = console.error;
 
 const getTimestamp = (): string => new Date().toISOString();
 
