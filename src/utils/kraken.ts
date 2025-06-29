@@ -75,5 +75,6 @@ export async function fetchPrices(pairs: string[]): Promise<Record<string, Price
             ts: new Date().toISOString(),
         };
     });
+    info(`[Kraken] Returned ${Object.keys(out).length} pairs`);
     return out;
 }
