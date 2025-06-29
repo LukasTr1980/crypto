@@ -41,7 +41,7 @@ export interface CoinSummary {
     priceTs: string;
 }
 
-async function  loadTradesRaw() {
+async function loadTradesRaw() {
     const res = await krakenPost('/0/private/TradesHistory');
     const rows = Object.values(res.trades ?? {}) as any[];
     console.log(`[Trades] Loaded ${rows.length} trades from API`);
@@ -87,10 +87,10 @@ function appendTotals(list: TradeItem[]): TradeResult {
 const isEurPair = (p: string) => /E?EUR$/i.test(p);
 
 export async function showBuys(): Promise<TradeResult> {
-    const proRows = await  loadTradesRaw();
+    const proRows = await loadTradesRaw();
     const proItems = proRows
-                        .filter(r => r.type === 'buy' && isEurPair(r.pair))
-                        .map(mapTrade);
+        .filter(r => r.type === 'buy' && isEurPair(r.pair))
+        .map(mapTrade);
 
     const instantRows = await getInstantTrades();
     const instantItems = instantRows.map(convertInstant);
@@ -99,38 +99,38 @@ export async function showBuys(): Promise<TradeResult> {
 }
 
 export async function showSells(): Promise<TradeResult> {
-    const items = (await  loadTradesRaw())
-                    .filter(r => r.type === 'sell' && isEurPair(r.pair))
-                    .map(mapTrade);
+    const items = (await loadTradesRaw())
+        .filter(r => r.type === 'sell' && isEurPair(r.pair))
+        .map(mapTrade);
     console.log(`[Trades] Sells loaded: ${items.length}`);
     return appendTotals(items);
 }
 
 export async function showCoinSummary(): Promise<CoinSummary[]> {
-    const proRows = await  loadTradesRaw();
+    const proRows = await loadTradesRaw();
     const instantRows = await getInstantTrades();
     const baseFees = await getBaseFees();
     const rewardRows = await getRewards();
 
     const bucket: Record<string, CoinSummary> = {};
     const ensure = (a: string): CoinSummary => bucket[a] ??= {
-            asset: a,
-            buyVolume: 0,
-            rewardVolume: 0,
-            buyCost: 0,
-            avgBuyPrice: null,
-            sellVolume: 0,
-            sellProceeds: 0,
-            avgSellPrice: null,
-            netVolume: 0,
-            netSpend: 0,
-            feeTotal: 0,
-            coinFee: 0,
-            realised: 0,
-            unrealised: 0,
-            totalPL: 0,
-            priceNow: 0,
-            priceTs: "" ,
+        asset: a,
+        buyVolume: 0,
+        rewardVolume: 0,
+        buyCost: 0,
+        avgBuyPrice: null,
+        sellVolume: 0,
+        sellProceeds: 0,
+        avgSellPrice: null,
+        netVolume: 0,
+        netSpend: 0,
+        feeTotal: 0,
+        coinFee: 0,
+        realised: 0,
+        unrealised: 0,
+        totalPL: 0,
+        priceNow: 0,
+        priceTs: "",
     };
 
     for (const r of proRows) {
@@ -148,7 +148,7 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
             b.feeTotal += fee;
         } else {
             b.sellVolume += vol,
-            b.sellProceeds += cost;
+                b.sellProceeds += cost;
             b.feeTotal += fee;
         }
     }
@@ -180,18 +180,43 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
         b.netSpend = b.buyCost - b.sellProceeds + b.feeTotal;
     }
 
-    const pairs = Object.keys(bucket).map(a => krakenPair(a));
+    const pairs = Object.keys(bucket).map(a => krakenPair(a)).filter((p): p is string => !!p);
     const priceResp = await fetchPrices(pairs);
 
+    const missingEUR = pairs.filter(p => !priceResp[p] && p.endsWith('EUR'));
+    if (missingEUR.length) {
+        // Fallback auf USD-Paare
+        const usdPairs = missingEUR.map(p => p.replace(/EUR$/, 'USD'));
+        const usdQuotes = await fetchPrices(usdPairs);
+        // USD→EUR Wechselkurs holen
+        const usdEur = (await fetchPrices(['USDEUR'])).USDEUR.price;
+        // EUR-Preise aus USD umrechnen
+        missingEUR.forEach(eurPair => {
+            const usdPair = eurPair.replace(/EUR$/, 'USD');
+            if (usdQuotes[usdPair]) {
+                priceResp[eurPair] = {
+                    price: usdQuotes[usdPair].price * usdEur,
+                    ts: usdQuotes[usdPair].ts,
+                };
+            }
+        });
+    }
+    const usdEur = priceResp['USDEUR']?.price ?? (await fetchPrices(['USDEUR'])).USDEUR.price;
+    priceResp['USDGEUR'] = { price: usdEur, ts: new Date().toISOString() };
+
     for (const b of Object.values(bucket)) {
-        const p = priceResp[krakenPair(b.asset)] ?? { price: 0, ts: "" };
-        b.priceNow = p.price;
-        b.priceTs = p.ts;
-        b.unrealised = b.netVolume * p.price;
+        if (b.asset === 'USDG') {                  // Stable-Coin
+            const q = priceResp['USDEUR'] ?? { price: 1, ts: '' };
+            b.priceNow = q.price;
+            b.priceTs = q.ts;
+        } else {
+            const q = priceResp[krakenPair(b.asset) ?? ''] ?? { price: 0, ts: '' };
+            b.priceNow = q.price;
+            b.priceTs = q.ts;
+        }
+        b.unrealised = b.netVolume * b.priceNow;
         b.realised = -b.netSpend;
         b.totalPL = b.realised + b.unrealised;
-        b.avgBuyPrice = b.buyVolume ? b.buyCost / b.buyVolume : null;
-        b.avgSellPrice = b.sellVolume ? b.sellProceeds / b.sellVolume : null;
     }
     return Object.values(bucket).sort((a, b) => a.asset.localeCompare(b.asset));
 }
