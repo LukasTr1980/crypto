@@ -117,7 +117,10 @@ function renderCoinTable(list: CoinSummary[]) {
         '<th class="num">Fees (Coin)</th>' +
         '<th class="num">Realised €</th>' +
         '<th class="num">Unrealised €</th>' +
-        '<th class="num">Total P/L €</th></tr>';
+        '<th class="num">Total P/L €</th>' + 
+        '<th class="num">Reward (Coin)' +
+        '<th class="num">Price</th>' +
+        '<th class="num">Quote TS</tr>';
 
     const body = list.map(c => row([
         c.asset,
@@ -134,7 +137,10 @@ function renderCoinTable(list: CoinSummary[]) {
         fmtEuro(c.realised, 2),
         fmtEuro(c.unrealised, 2),
         fmtEuro(c.totalPL, 2),
-    ], [1,2,3,4,5,6,7,8,9,10,11,12,13])).join('');
+        fmtEuro(c.rewardVolume, 2),
+        fmtEuro(c.priceNow, 2),
+        c.priceTs || '-',
+    ], [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])).join('');
 
     return `<section><h2>Per-Coin Totals</h2><table><thead>${header}</thead><tbody>${body}</tbody></table></section>`;
 }

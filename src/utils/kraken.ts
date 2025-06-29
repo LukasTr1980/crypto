@@ -16,6 +16,11 @@ if (!KEY || !SECRET) {
     process.exit(1);
 }
 
+export interface PriceQuote {
+    price: number;
+    ts: string;
+}
+
 function sign(path: string, params: URLSearchParams, secretB64: string): string {
     const nonce = params.get('nonce')!;
     const hash = sha256(new TextEncoder().encode(nonce + params.toString()));
@@ -25,34 +30,49 @@ function sign(path: string, params: URLSearchParams, secretB64: string): string 
     return base64.encode(sig);
 }
 
-export async function krakenPost(path: string) {
+export async function krakenPost(path: string): Promise<any> {
     const params = new URLSearchParams({ nonce: nextNonce() });
     const headers = {
-        'API-Key': KEY!,
-        'API-Sign': sign(path, params, SECRET!),
-        'Content-Type': 'application/x-www-form-urlencoded'
-    };
+        "API-Key": KEY,
+        "API-Sign": sign(path, params, SECRET!),
+        "Content-Type": "application/x-www-form-urlencoded",
+    } as const;
 
     console.log(`[Kraken] POST ${path}`);
-    try {
-        const { data } = await axios.post(API_URL + path, params, { headers });
-        if (data.error?.length) {
-            console.error(`[Kraken] Error: ${data.error.join('; ')}`);
-            throw new Error(data.error.join('; '));
-        }
-        return data.result;
-    } catch (err: any) {
-        console.error(`[Kraken] Request failed: ${err.message}`);
-        throw err;
+    const { data } = await axios.post(API_URL + path, params, { headers });
+    if (data.error?.length) {
+        console.error(`[Kraken] Error: ${data.error.join("; ")}`);
+        throw new Error(data.error.join(";"));
     }
+    return data.result;
 }
 
-export async function fetchPrices(pairs: string[]): Promise<Record<string, number>> {
-    const url = 'https://api.kraken.com/0/public/Ticker?pair=' + pairs.join(',');
-    const { result } = await (await fetch(url)).json();
-    const out: Record<string, number> = {};
-    for (const [pair, data] of Object.entries<any>(result)) {
-        out[pair] = Number(data.c[0]);
+async function krakenGet(path: string, params: Record<string, any> = {}) {
+    console.log(`[Kraken] GET ${path}`);
+    const { data } = await axios.get(API_URL + path, { params });
+    if (data.error?.length) throw new Error(data.error.join(";"));
+    return data.result;
+}
+
+export async function fetchPrices(pairs: string[]): Promise<Record<string, PriceQuote>> {
+    if (!pairs.length) return {};
+
+    console.log(`[Kraken] GET /0/public/Ticker?pair=${pairs.join(',')}`);
+    const { data } = await axios.get(`${API_URL}/0/public/Ticker`, {
+        params: { pair: pairs.join(',') },
+    });
+
+    if (data.error?.length) {
+        console.error(`[Kraken] Ticker error: ${data.error.join("; ")}`);
+        throw new Error(data.error.join("; "));
     }
+
+    const out: Record<string, PriceQuote> = {};
+    Object.entries(data.result).forEach(([pair, t]: any) => {
+        out[pair] = {
+            price: Number(t.c[0]),
+            ts: new Date().toISOString(),
+        };
+    });
     return out;
 }

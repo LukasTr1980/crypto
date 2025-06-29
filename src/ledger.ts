@@ -18,31 +18,40 @@ export interface BaseFee {
     refid: string;
 }
 
-export async function getInstantBuys(): Promise<InstantTrade[]> {
+export interface RewardItem {
+    time: string;
+    asset: string;
+    volume: number;
+    refid: string;
+}
+
+export async function getInstantTrades(): Promise<InstantTrade[]> {
     const { ledger } = await krakenPost('/0/private/Ledgers');
     const rows = Object.values(ledger ?? {}) as any[];
 
-    const buckets: Record<string, any[]> = {};
-    rows.forEach(r => {
-        if (!['spend', 'receive'].includes(r.type)) return;
-        (buckets[r.refid] = buckets[r.refid] ?? []).push(r);
-    });
+    const bucket: Record<string, any[]> = {};
+    rows.forEach(r => (bucket[r.refid] = [...(bucket[r.refid] ?? []), r]));
 
-    return Object.values(buckets).flatMap(g => {
-        const spend = g.find(x => x.type === 'spend' && ['EUR', 'ZEUR'].includes(x.asset) && Number(x.amount) < 0);
-        const receive = g.find(x => x.type === 'receive' && x.asset !== 'EUR');
-        if (!spend || !receive) return [];
-        const cost = Math.abs(Number(spend.amount));
-        const volume = Number(receive.amount);
-        return [{
-            time: dt(receive.time),
-            asset: mapKrakenAsset(receive.asset),
-            volume,
-            cost,
-            price: Number((cost / volume).toFixed(8)),
-            refid: receive.refid,
-        }];
-    });
+    const out: InstantTrade[] = [];
+
+    for (const g of Object.values(bucket)) {
+        const eurSpend = g.find(x => x.type === 'spend' && ["EUR", "ZEUR"].includes(x.asset));
+        const eurRecv = g.find(x => x.type === 'receive' && ["EUR", "ZEUR"].includes(x.asset));
+        const coinSpend = g.find(x => x.type === 'spend' && !["EUR", "ZEUR"].includes(x.asset));
+        const coinRecv = g.find(x => x.type === 'receive' && !["EUR", "ZEUR"].includes(x.asset));
+
+        if (!coinRecv && !coinSpend) continue;
+        if (!eurSpend && !eurRecv) continue;
+
+        const asset = mapKrakenAsset((coinRecv ?? coinSpend).asset);
+        const volume = coinRecv ? Number(coinRecv.amount) : -Number(coinSpend.amount);
+        const cost = Math.abs(Number((eurSpend ?? eurRecv).amount));
+        const price = Number((cost / Math.abs(volume)).toFixed(8));
+        const time = dt((coinRecv ?? coinSpend).time);
+
+        out.push({ time, asset, volume, cost, price, refid: (coinRecv ?? coinSpend).refid });
+    }
+    return out;
 }
 
 export async function getBaseFees(): Promise<BaseFee[]> {
@@ -58,5 +67,17 @@ export async function getBaseFees(): Promise<BaseFee[]> {
             asset: mapKrakenAsset(r.asset.replace(/\\.\\w+$/, '')),
             volume: Number(r.fee),
             refid: r.refid
+        }));
+}
+
+export async function getRewards(): Promise<RewardItem[]> {
+    const { ledger } = await krakenPost("/0/private/Ledgers");
+    return Object.values(ledger ?? {})
+        .filter((r: any) => r.type === "reward" && Number(r.amount) > 0)
+        .map((r: any) => ({
+            time: dt(r.time),
+            asset: mapKrakenAsset(r.asset),
+            volume: Number(r.amount),
+            refid: r.refid,
         }));
 }

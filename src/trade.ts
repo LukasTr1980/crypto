@@ -1,6 +1,6 @@
 import { krakenPost, fetchPrices } from "./utils/kraken";
 import { dt } from "./utils/dt";
-import { getInstantBuys, InstantTrade, getBaseFees, BaseFee } from "./ledger";
+import { InstantTrade, getBaseFees, getInstantTrades, getRewards } from "./ledger";
 import { mapKrakenAsset, krakenPair } from "./utils/assetMapper";
 
 export interface TradeItem {
@@ -24,6 +24,7 @@ export interface TradeResult {
 export interface CoinSummary {
     asset: string;
     buyVolume: number;
+    rewardVolume: number;
     buyCost: number;
     avgBuyPrice: number | null;
     sellVolume: number;
@@ -36,6 +37,8 @@ export interface CoinSummary {
     realised: number;
     unrealised: number;
     totalPL: number;
+    priceNow: number;
+    priceTs: string;
 }
 
 async function  loadTradesRaw() {
@@ -89,7 +92,7 @@ export async function showBuys(): Promise<TradeResult> {
                         .filter(r => r.type === 'buy' && isEurPair(r.pair))
                         .map(mapTrade);
 
-    const instantRows = await getInstantBuys();
+    const instantRows = await getInstantTrades();
     const instantItems = instantRows.map(convertInstant);
     console.log(`[Trades] Buys: ${proItems.length} pro, ${instantItems.length} instant`);
     return appendTotals([...proItems, ...instantItems]);
@@ -105,13 +108,15 @@ export async function showSells(): Promise<TradeResult> {
 
 export async function showCoinSummary(): Promise<CoinSummary[]> {
     const proRows = await  loadTradesRaw();
-    const instantRows = await getInstantBuys();
+    const instantRows = await getInstantTrades();
     const baseFees = await getBaseFees();
+    const rewardRows = await getRewards();
 
     const bucket: Record<string, CoinSummary> = {};
     const ensure = (a: string): CoinSummary => bucket[a] ??= {
             asset: a,
             buyVolume: 0,
+            rewardVolume: 0,
             buyCost: 0,
             avgBuyPrice: null,
             sellVolume: 0,
@@ -124,7 +129,9 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
             realised: 0,
             unrealised: 0,
             totalPL: 0,
-    }
+            priceNow: 0,
+            priceTs: "" ,
+    };
 
     for (const r of proRows) {
         if (!isEurPair(r.pair)) continue;
@@ -146,10 +153,15 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
         }
     }
 
-    for (const i of instantRows) {
-        const b = ensure(i.asset);
-        b.buyVolume += i.volume;
-        b.buyCost += i.cost;
+    for (const t of instantRows) {
+        const b = ensure(t.asset);
+        if (t.volume > 0) {
+            b.buyVolume += t.volume;
+            b.buyCost += t.cost
+        } else {
+            b.sellVolume += -t.volume;
+            b.sellProceeds += t.cost;
+        }
     }
 
     for (const f of baseFees) {
@@ -158,26 +170,28 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
         b.coinFee += f.volume;
     }
 
+    for (const r of rewardRows) {
+        const b = ensure(r.asset);
+        b.rewardVolume += r.volume;
+    }
+
     for (const b of Object.values(bucket)) {
-        b.avgBuyPrice = b.buyVolume ? b.buyCost / b.buyVolume : null;
-        b.avgSellPrice = b.sellVolume ? b.sellProceeds / b.sellVolume : null;
-        b.netVolume = b.buyVolume - b.sellVolume;
+        b.netVolume = b.buyVolume + b.rewardVolume - b.sellVolume - b.coinFee;
         b.netSpend = b.buyCost - b.sellProceeds + b.feeTotal;
     }
 
     const pairs = Object.keys(bucket).map(a => krakenPair(a));
-    const prices = await fetchPrices(pairs);
+    const priceResp = await fetchPrices(pairs);
 
     for (const b of Object.values(bucket)) {
-        const price = prices[krakenPair(b.asset)] ?? 0;
-
-        const avgCost = b.buyVolume ? b.buyCost / b.buyVolume : 0;
-        const costSold = avgCost * b.sellVolume;
-
+        const p = priceResp[krakenPair(b.asset)] ?? { price: 0, ts: "" };
+        b.priceNow = p.price;
+        b.priceTs = p.ts;
+        b.unrealised = b.netVolume * p.price;
         b.realised = -b.netSpend;
-        b.unrealised = b.netVolume * price;
         b.totalPL = b.realised + b.unrealised;
+        b.avgBuyPrice = b.buyVolume ? b.buyCost / b.buyVolume : null;
+        b.avgSellPrice = b.sellVolume ? b.sellProceeds / b.sellVolume : null;
     }
-
     return Object.values(bucket).sort((a, b) => a.asset.localeCompare(b.asset));
 }
