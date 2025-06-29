@@ -35,7 +35,7 @@ export interface CoinSummary {
     coinFee: number;
 }
 
-async function laodTradesRaw() {
+async function  loadTradesRaw() {
     const res = await krakenPost('/0/private/TradesHistory');
     return Object.values(res.trades ?? {}) as any[];    
 }
@@ -79,7 +79,7 @@ function appendTotals(list: TradeItem[]): TradeResult {
 const isEurPair = (p: string) => /E?EUR$/i.test(p);
 
 export async function showBuys(): Promise<TradeResult> {
-    const proRows = await laodTradesRaw();
+    const proRows = await  loadTradesRaw();
     const proItems = proRows
                         .filter(r => r.type === 'buy' && isEurPair(r.pair))
                         .map(mapTrade);
@@ -91,14 +91,14 @@ export async function showBuys(): Promise<TradeResult> {
 }
 
 export async function showSells(): Promise<TradeResult> {
-    const items = (await laodTradesRaw())
+    const items = (await  loadTradesRaw())
                     .filter(r => r.type === 'sell' && isEurPair(r.pair))
                     .map(mapTrade);
     return appendTotals(items);
 }
 
 export async function showCoinSummary(): Promise<CoinSummary[]> {
-    const proRows = await laodTradesRaw();
+    const proRows = await  loadTradesRaw();
     const instantRows = await getInstantBuys();
     const baseFees = await getBaseFees();
 
