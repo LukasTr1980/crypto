@@ -14,3 +14,14 @@ export function mapKrakenAsset(code: string): string {
     
     return ALT_MAP[code] ?? code;
 }
+
+export function krakenPair(asset: string): string {
+    switch (asset) {
+        case 'BTC': return 'XXBTZEUR';
+        case 'DOGE': return 'XDGEUR';
+        case 'ETH': return 'XETHZEUR';
+        case 'ETC': return 'XETCEUR';
+        case 'SOL': return 'SOLEUR';
+        default: return `${asset}EUR`;
+    }
+}

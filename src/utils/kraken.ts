@@ -46,3 +46,13 @@ export async function krakenPost(path: string) {
         throw err;
     }
 }
+
+export async function fetchPrices(pairs: string[]): Promise<Record<string, number>> {
+    const url = 'https://api.kraken.com/0/public/Ticker?pair=' + pairs.join(',');
+    const { result } = await (await fetch(url)).json();
+    const out: Record<string, number> = {};
+    for (const [pair, data] of Object.entries<any>(result)) {
+        out[pair] = Number(data.c[0]);
+    }
+    return out;
+}
