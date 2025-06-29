@@ -7,9 +7,11 @@
     "build": "npm run build:server && npm run build:client",
     "build:server": "tsc",
     "build:client": "esbuild src/main.ts --bundle --format=iife --target=es2017 --outfile=public/main.js",
-    "start": "node dist/server.js",
-    "dev": "ts-node src/server.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:prod": "node dist/server.js",
+    "dev": "concurrently --kill-others-on-fail \"npm:dev:server\" \"npm:dev:client\"",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:server": "nodemon",
+    "dev:client": "esbuild src/main.ts --bundle --format=iife --target=es2017 --outfile=public/main.js --watch"
   },
   "keywords": [],
   "author": "",
@@ -25,7 +27,9 @@
   "devDependencies": {
     "@types/express": "^5.0.3",
     "@types/node": "^24.0.4",
+    "concurrently": "^9.2.0",
     "esbuild": "^0.25.5",
+    "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   }

@@ -6,7 +6,11 @@ import { base64 } from '@scure/base';
 import { nextNonce } from './nonce';
 import { info, error } from './logger';
 
-dotenv.config();
+info(process.env.NODE_ENV);
+
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config();
+}
 
 const API_URL = 'https://api.kraken.com';
 
