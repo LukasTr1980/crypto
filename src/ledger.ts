@@ -1,4 +1,3 @@
-import { krakenPost } from "./utils/kraken";
 import { dt } from "./utils/dt";
 import { mapKrakenAsset } from "./utils/assetMapper";
 import { info } from "./utils/logger";
@@ -26,16 +25,12 @@ export interface RewardItem {
     refid: string;
 }
 
-export async function getInstantTrades(): Promise<InstantTrade[]> {
+export function getInstantTrades(ledgerRows: any[]): InstantTrade[] {
     info('[Ledger] getInstantTrades start');
-    const { ledger } = await krakenPost('/0/private/Ledgers');
-    const rows = Object.values(ledger ?? {}) as any[];
-
     const bucket: Record<string, any[]> = {};
-    rows.forEach(r => (bucket[r.refid] = [...(bucket[r.refid] ?? []), r]));
+    ledgerRows.forEach(r => (bucket[r.refid] = [...(bucket[r.refid] ?? []), r]));
 
     const out: InstantTrade[] = [];
-
     for (const g of Object.values(bucket)) {
         const eurSpend = g.find(x => x.type === 'spend' && ["EUR", "ZEUR"].includes(x.asset));
         const eurRecv = g.find(x => x.type === 'receive' && ["EUR", "ZEUR"].includes(x.asset));
@@ -56,10 +51,9 @@ export async function getInstantTrades(): Promise<InstantTrade[]> {
     return out;
 }
 
-export async function getBaseFees(): Promise<BaseFee[]> {
+export function getBaseFees(ledgerRows: any[]): BaseFee[] {
     info('[Ledger] getBaseFees start');
-    const { ledger } = await krakenPost('/0/private/Ledgers');
-    return Object.values(ledger ?? {})
+    return ledgerRows
         .filter((r: any) => 
             r.type === 'trade' &&
             r.fee && Number(r.fee) > 0 &&
@@ -73,11 +67,10 @@ export async function getBaseFees(): Promise<BaseFee[]> {
         }));
 }
 
-export async function getRewards(): Promise<RewardItem[]> {
+export function getRewards(ledgerRows: any[]): RewardItem[] {
     info('[Ledger] getRewards start');
-    const { ledger } = await krakenPost("/0/private/Ledgers");
-    return Object.values(ledger ?? {})
-        .filter((r: any) => r.type === "reward" && Number(r.amount) > 0)
+    return ledgerRows
+        .filter((r: any) => (r.type === "reward" || r.subtype === "reward") && Number(r.amount) > 0)
         .map((r: any) => ({
             time: dt(r.time),
             asset: mapKrakenAsset(r.asset),

@@ -92,11 +92,14 @@ const isEurPair = (p: string) => /E?EUR$/i.test(p);
 export async function showBuys(): Promise<TradeResult> {
     info('[Trades] showBuys start');
     const proRows = await loadTradesRaw();
+    const { ledger } = await krakenPost('/0/private/Ledgers');
+    const ledgerRows = Object.values(ledger ?? {}) as any;
+
     const proItems = proRows
         .filter(r => r.type === 'buy' && isEurPair(r.pair))
         .map(mapTrade);
 
-    const instantRows = await getInstantTrades();
+    const instantRows = getInstantTrades(ledgerRows);
     const instantItems = instantRows.map(convertInstant);
     info(`[Trades] Buys: ${proItems.length} pro, ${instantItems.length} instant`);
     return appendTotals([...proItems, ...instantItems]);
@@ -114,11 +117,15 @@ export async function showSells(): Promise<TradeResult> {
 // trade.ts - DEBUGGING-VERSION zum Loggen der API-Antwort
 
 export async function showCoinSummary(): Promise<CoinSummary[]> {
-    info('[Trades] showCoinSummary start');
     const proRows = await loadTradesRaw();
-    const instantRows = await getInstantTrades();
-    const baseFees = await getBaseFees();
-    const rewardRows = await getRewards();
+    const { ledger } = await krakenPost('/0/private/Ledgers');
+    const ledgerRows = Object.values(ledger ?? {}) as any[];
+    info(`[Main] Loaded ${ledgerRows.length} ledger entries from API`);
+
+
+    const instantRows = await getInstantTrades(ledgerRows);
+    const baseFees = await getBaseFees(ledgerRows);
+    const rewardRows = await getRewards(ledgerRows);
 
     const bucket: Record<string, CoinSummary> = {};
     const ensure = (a: string): CoinSummary => bucket[a] ??= {
@@ -172,7 +179,6 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
     }
     for (const f of baseFees) {
         const b = ensure(f.asset);
-        b.buyVolume -= f.volume;
         b.coinFee += f.volume;
     }
     for (const r of rewardRows) {
