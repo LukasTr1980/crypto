@@ -43,6 +43,7 @@ export interface CoinSummary {
 }
 
 async function loadTradesRaw() {
+    info('[Trades] loadTradesRaw start');
     const res = await krakenPost('/0/private/TradesHistory');
     const rows = Object.values(res.trades ?? {}) as any[];
     info(`[Trades] Loaded ${rows.length} trades from API`);
@@ -88,6 +89,7 @@ function appendTotals(list: TradeItem[]): TradeResult {
 const isEurPair = (p: string) => /E?EUR$/i.test(p);
 
 export async function showBuys(): Promise<TradeResult> {
+    info('[Trades] showBuys start');
     const proRows = await loadTradesRaw();
     const proItems = proRows
         .filter(r => r.type === 'buy' && isEurPair(r.pair))
@@ -100,6 +102,7 @@ export async function showBuys(): Promise<TradeResult> {
 }
 
 export async function showSells(): Promise<TradeResult> {
+    info('[Trades] showSells start');
     const items = (await loadTradesRaw())
         .filter(r => r.type === 'sell' && isEurPair(r.pair))
         .map(mapTrade);
@@ -110,6 +113,7 @@ export async function showSells(): Promise<TradeResult> {
 // trade.ts - DEBUGGING-VERSION zum Loggen der API-Antwort
 
 export async function showCoinSummary(): Promise<CoinSummary[]> {
+    info('[Trades] showCoinSummary start');
     const proRows = await loadTradesRaw();
     const instantRows = await getInstantTrades();
     const baseFees = await getBaseFees();
@@ -163,6 +167,8 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
         if(b.buyVolume > 0) b.avgBuyPrice = b.buyCost / b.buyVolume;
         if(b.sellVolume > 0) b.avgSellPrice = b.sellProceeds / b.sellVolume;
     }
+
+    info(`[Trades] Coin summary bucket built: ${Object.keys(bucket).length} assets`);
 
     // --- Preisabfrage (unverändert) ---
     const assetsInBucket = Object.keys(bucket);

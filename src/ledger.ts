@@ -1,6 +1,7 @@
 import { krakenPost } from "./utils/kraken";
 import { dt } from "./utils/dt";
 import { mapKrakenAsset } from "./utils/assetMapper";
+import { info } from "./utils/logger";
 
 export interface InstantTrade {
     time: string;
@@ -26,6 +27,7 @@ export interface RewardItem {
 }
 
 export async function getInstantTrades(): Promise<InstantTrade[]> {
+    info('[Ledger] getInstantTrades start');
     const { ledger } = await krakenPost('/0/private/Ledgers');
     const rows = Object.values(ledger ?? {}) as any[];
 
@@ -55,6 +57,7 @@ export async function getInstantTrades(): Promise<InstantTrade[]> {
 }
 
 export async function getBaseFees(): Promise<BaseFee[]> {
+    info('[Ledger] getBaseFees start');
     const { ledger } = await krakenPost('/0/private/Ledgers');
     return Object.values(ledger ?? {})
         .filter((r: any) => 
@@ -71,6 +74,7 @@ export async function getBaseFees(): Promise<BaseFee[]> {
 }
 
 export async function getRewards(): Promise<RewardItem[]> {
+    info('[Ledger] getRewards start');
     const { ledger } = await krakenPost("/0/private/Ledgers");
     return Object.values(ledger ?? {})
         .filter((r: any) => r.type === "reward" && Number(r.amount) > 0)

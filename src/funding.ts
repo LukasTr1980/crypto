@@ -18,6 +18,7 @@ export interface FundingResult {
 }
 
 export async function showDeposits(): Promise<FundingResult> {
+    info('[Funding] showDeposits start');
     const res = await krakenPost('/0/private/DepositStatus');
     let gross = 0, feeSum = 0;
 
@@ -47,6 +48,7 @@ export async function showDeposits(): Promise<FundingResult> {
 }
 
 export async function showWithdrawals(): Promise<FundingResult> {
+    info('[Funding] showWithdrawals start');
     const res = await krakenPost('/0/private/WithdrawStatus');
     let gross = 0, feeSum = 0;
 
