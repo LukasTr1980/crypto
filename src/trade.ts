@@ -137,14 +137,13 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
 
         if (r.type === 'buy') {
             b.buyVolume += vol;
-            b.buyCost += cost + fee;
+            b.buyCost += cost;
             b.feeTotal += fee;
         } else {
             b.sellVolume += vol,
-            b.sellProceeds += cost - fee;
+            b.sellProceeds += cost;
             b.feeTotal += fee;
         }
-        b.feeTotal += Number(r.fee);
     }
 
     for (const i of instantRows) {
@@ -175,7 +174,7 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
         const avgCost = b.buyVolume ? b.buyCost / b.buyVolume : 0;
         const costSold = avgCost * b.sellVolume;
 
-        b.realised = b.sellProceeds - costSold;
+        b.realised = -b.netSpend;
         b.unrealised = b.netVolume * price;
         b.totalPL = b.realised + b.unrealised;
     }
