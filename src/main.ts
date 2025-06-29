@@ -119,10 +119,10 @@ function renderCoinTable(list: CoinSummary[]) {
         '<th class="num">Realised €</th>' +
         '<th class="num">Unrealised €</th>' +
         '<th class="num">Total P/L €</th>' +
-        '<th class="num">Total P/L %' +
-        '<th class="num">Reward (Coin)' +
+        '<th class="num">Total P/L %</th>' +
+        '<th class="num">Reward (Coin)</th>' +
         '<th class="num">Price</th>' +
-        '<th class="num">Quote TS</tr>';
+        '<th class="num">Quote TS</th></tr>';
 
     const body = list.map(c => {
         const formatPl = (pl: number): string => {
