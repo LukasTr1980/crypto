@@ -168,6 +168,7 @@ async function load() {
 
     info('[Main] Loading page data');
     try {
+        info('[Main] Fetching /api/funding');
         const fundingRes = await fetch('/api/funding');
         if (!fundingRes.ok) {
             const body = await fundingRes.json().catch(() => ({}));
@@ -175,7 +176,9 @@ async function load() {
         }
 
         const funding: FundingResponse = await fundingRes.json();
+        info(`[Main] /api/funding OK: ${funding.deposits.items.length} deposits, ${funding.withdrawals.items.length} withdrawals`);
 
+        info('[Main] Fetching /api/trades');
         const tradesRes = await fetch('/api/trades');
         if (!tradesRes.ok) {
             const body = await tradesRes.json().catch(() => ({}));
@@ -183,7 +186,9 @@ async function load() {
         }
 
         const trades: TradeResponse = await tradesRes.json();
+        info(`[Main] /api/trades OK: ${trades.buys.items.length} buys, ${trades.sells.items.length} sells`);
 
+        info('[Main] Fetching /api/coin-summary');
         const summaryRes = await fetch('/api/coin-summary');
         if (!summaryRes.ok) {
             const errorBody = await summaryRes.json().catch(() => ({ message: `Server error: ${summaryRes.status}` }));
@@ -191,6 +196,7 @@ async function load() {
         }
 
         const summary: CoinSummary[] = await summaryRes.json();
+        info(`[Main] /api/coin-summary OK: ${summary.length} coins`);
 
         let html =
             renderCoinTable(summary) +
