@@ -32,7 +32,7 @@ function renderFundingTable(result: FundingResult, caption: string) {
             fmt(i.amount, 2),
             fmt(i.fee, 2),
             fmt(i.net, 2)
-        ], [2,3,4]))
+        ], [2, 3, 4]))
         .join('');
 
     const summary = row([
@@ -55,7 +55,7 @@ function renderFundingTable(result: FundingResult, caption: string) {
 }
 
 function renderTradeTable(result: TradeResult, caption: string) {
-    const header = 
+    const header =
         '<tr><th>Time</th><th>Pair</th><th>Side</th>' +
         '<th class="num">Price €</th>' +
         '<th class="num">Volume</th>' +
@@ -63,7 +63,7 @@ function renderTradeTable(result: TradeResult, caption: string) {
         '<th class="num">Fee €</th></tr>';
 
     const body = result.items
-        .map(t => 
+        .map(t =>
             row(
                 [
                     t.time,
@@ -78,7 +78,7 @@ function renderTradeTable(result: TradeResult, caption: string) {
             )
         )
         .join('');
-    
+
     const summary = row(
         [
             '<strong>Total</strong>',
@@ -103,7 +103,7 @@ function renderTradeTable(result: TradeResult, caption: string) {
 }
 
 function renderCoinTable(list: CoinSummary[]) {
-    const header = 
+    const header =
         '<tr><th>Coin</th>' +
         '<th class="num">Buy €</th>' +
         '<th class="num">Buy (Coin)</th>' +
@@ -117,30 +117,44 @@ function renderCoinTable(list: CoinSummary[]) {
         '<th class="num">Fees (Coin)</th>' +
         '<th class="num">Realised €</th>' +
         '<th class="num">Unrealised €</th>' +
-        '<th class="num">Total P/L €</th>' + 
+        '<th class="num">Total P/L €</th>' +
         '<th class="num">Reward (Coin)' +
         '<th class="num">Price</th>' +
         '<th class="num">Quote TS</tr>';
 
-    const body = list.map(c => row([
-        c.asset,
-        fmtEuro(c.buyCost, 2),
-        fmt(c.buyVolume, 8),
-        c.avgBuyPrice ? fmt(c.avgBuyPrice, 2) : '-',
-        fmtEuro(c.sellProceeds, 2),
-        fmt(c.sellVolume, 8),
-        c.avgSellPrice ? fmt(c.avgSellPrice, 2) : '-',
-        fmt(c.netVolume, 8),
-        fmtEuro(c.netSpend, 2),
-        fmtEuro(c.feeTotal, 2),
-        fmt(c.coinFee, 8),
-        fmtEuro(c.realised, 2),
-        fmtEuro(c.unrealised, 2),
-        fmtEuro(c.totalPL, 2),
-        fmt(c.rewardVolume, 8),
-        fmtEuro(c.priceNow, 2),
-        c.priceTs || '-',
-    ], [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])).join('');
+    const body = list.map(c => {
+        const formatPl = (pl: number): string => {
+            const formattedPl = fmtEuro(pl, 2);
+            if (pl > 0) {
+                return `<span class="gain">${formattedPl}</span>`;
+            }
+            if (pl < 0) {
+                return `<span class="loss">${formattedPl}</span>`
+            }
+            return formattedPl;
+        };
+
+        return row([
+            c.asset,
+            fmtEuro(c.buyCost, 2),
+            fmt(c.buyVolume, 8),
+            c.avgBuyPrice ? fmt(c.avgBuyPrice, 2) : '-',
+            fmtEuro(c.sellProceeds, 2),
+            fmt(c.sellVolume, 8),
+            c.avgSellPrice ? fmt(c.avgSellPrice, 2) : '-',
+            fmt(c.netVolume, 8),
+            fmtEuro(c.netSpend, 2),
+            fmtEuro(c.feeTotal, 2),
+            fmt(c.coinFee, 8),
+            fmtEuro(c.realised, 2),
+            fmtEuro(c.unrealised, 2),
+            // HIER WIRD DIE NEUE FUNKTION AUFGERUFEN
+            formatPl(c.totalPL),
+            fmt(c.rewardVolume, 8),
+            fmtEuro(c.priceNow, 2),
+            c.priceTs || '-',
+        ], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+    }).join('');
 
     return `<section><h2>Per-Coin Totals</h2><table><thead>${header}</thead><tbody>${body}</tbody></table></section>`;
 }
@@ -156,7 +170,7 @@ async function load() {
         const fundingRes = await fetch('/api/funding');
         if (!fundingRes.ok) {
             const body = await fundingRes.json().catch(() => ({}));
-            throw new Error (body.error ?? `HTTP ${fundingRes.status}`);
+            throw new Error(body.error ?? `HTTP ${fundingRes.status}`);
         }
 
         const funding: FundingResponse = await fundingRes.json();
@@ -164,11 +178,11 @@ async function load() {
         const tradesRes = await fetch('/api/trades');
         if (!tradesRes.ok) {
             const body = await tradesRes.json().catch(() => ({}));
-            throw new Error (body.error ?? `HTTP ${tradesRes.status}`);
+            throw new Error(body.error ?? `HTTP ${tradesRes.status}`);
         }
 
         const trades: TradeResponse = await tradesRes.json();
-        
+
         const summaryRes = await fetch('/api/coin-summary');
         if (!summaryRes.ok) {
             const errorBody = await summaryRes.json().catch(() => ({ message: `Server error: ${summaryRes.status}` }));
@@ -183,7 +197,7 @@ async function load() {
             renderTradeTable(trades.sells, 'Sells') +
             renderFundingTable(funding.deposits, 'Deposits') +
             renderFundingTable(funding.withdrawals, 'Withdrawals');
-        
+
         el.innerHTML = html;
         console.log('[Main] Page data loaded');
 

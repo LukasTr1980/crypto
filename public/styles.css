@@ -39,7 +39,10 @@ h2 {
 
 #content {
     width: 100%;
-    max-width: 900px;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 pre {
@@ -97,4 +100,14 @@ tfoot td {
     border-top: 1px solid var(--border);
     font-weight: 600;
     background: #202226;
+}
+
+.gain {
+    color: #4caf50;
+    font-weight: 600;
+}
+
+.loss {
+    color: #f44336;
+    font-weight: 600;
 }
