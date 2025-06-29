@@ -1,8 +1,8 @@
-import { krakenPost, fetchPrices } from "./utils/kraken";
+import { fetchTradesHistory, fetchPrices, fetchAllLedgers } from "./utils/kraken";
 import { dt } from "./utils/dt";
 import { InstantTrade, getBaseFees, getInstantTrades, getRewards } from "./ledger";
 import { mapKrakenAsset, krakenPair, getPublicTickerPair, mapPublicPairToAsset } from "./utils/assetMapper";
-import { info, error } from "./utils/logger";
+import { info, debug } from "./utils/logger";
 
 export interface TradeItem {
     time: string;
@@ -45,7 +45,7 @@ export interface CoinSummary {
 
 async function loadTradesRaw() {
     info('[Trades] loadTradesRaw start');
-    const res = await krakenPost('/0/private/TradesHistory');
+    const res = await fetchTradesHistory();
     const rows = Object.values(res.trades ?? {}) as any[];
     info(`[Trades] Loaded ${rows.length} trades from API`);
     return rows;
@@ -92,8 +92,7 @@ const isEurPair = (p: string) => /E?EUR$/i.test(p);
 export async function showBuys(): Promise<TradeResult> {
     info('[Trades] showBuys start');
     const proRows = await loadTradesRaw();
-    const { ledger } = await krakenPost('/0/private/Ledgers');
-    const ledgerRows = Object.values(ledger ?? {}) as any;
+    const ledgerRows = await fetchAllLedgers();
 
     const proItems = proRows
         .filter(r => r.type === 'buy' && isEurPair(r.pair))
@@ -118,14 +117,18 @@ export async function showSells(): Promise<TradeResult> {
 
 export async function showCoinSummary(): Promise<CoinSummary[]> {
     const proRows = await loadTradesRaw();
-    const { ledger } = await krakenPost('/0/private/Ledgers');
-    const ledgerRows = Object.values(ledger ?? {}) as any[];
+
+    const ledgerRows = await fetchAllLedgers();
+
     info(`[Main] Loaded ${ledgerRows.length} ledger entries from API`);
 
 
     const instantRows = await getInstantTrades(ledgerRows);
     const baseFees = await getBaseFees(ledgerRows);
     const rewardRows = await getRewards(ledgerRows);
+
+    const solRewards = rewardRows.filter(r => /SOL/.test(r.asset));
+    debug('Inspection of SOL-Rewards before handling:', solRewards);
 
     const bucket: Record<string, CoinSummary> = {};
     const ensure = (a: string): CoinSummary => bucket[a] ??= {
@@ -185,6 +188,18 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
         const b = ensure(r.asset);
         b.rewardVolume += r.volume;
     }
+
+    const solBucket = bucket['SOL'];
+    if (solBucket) {
+        debug('SOL Bucket Status after aggregation', {
+            buyVolume: solBucket.buyVolume,
+            sellVolume: solBucket.sellVolume,
+            rewardVolume: solBucket.rewardVolume,
+            coinFee: solBucket.coinFee,
+            calculatedNet: solBucket.buyVolume + solBucket.rewardVolume - solBucket.sellVolume - solBucket.coinFee
+        });
+    }
+    
     for (const b of Object.values(bucket)) {
         b.netVolume = b.buyVolume + b.rewardVolume - b.sellVolume - b.coinFee;
         b.netSpend = b.buyCost - b.sellProceeds + b.feeTotal;

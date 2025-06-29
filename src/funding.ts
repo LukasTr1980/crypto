@@ -1,6 +1,7 @@
 import { dt } from './utils/dt';
 import { krakenPost } from './utils/kraken';
-import { info, error } from './utils/logger';
+import { info } from './utils/logger';
+import { nextNonce } from './utils/nonce';
 
 export interface FundingItem {
     time: string;
@@ -19,7 +20,8 @@ export interface FundingResult {
 
 export async function showDeposits(): Promise<FundingResult> {
     info('[Funding] showDeposits start');
-    const res = await krakenPost('/0/private/DepositStatus');
+    const params = new URLSearchParams({ nonce: nextNonce() });
+    const res = await krakenPost('/0/private/DepositStatus', params);
     let gross = 0, feeSum = 0;
 
     const items = res.map((d: any) => {
@@ -49,7 +51,8 @@ export async function showDeposits(): Promise<FundingResult> {
 
 export async function showWithdrawals(): Promise<FundingResult> {
     info('[Funding] showWithdrawals start');
-    const res = await krakenPost('/0/private/WithdrawStatus');
+    const params = new URLSearchParams({ nonce: nextNonce() });
+    const res = await krakenPost('/0/private/WithdrawStatus', params);
     let gross = 0, feeSum = 0;
 
     const items = res.map((w: any) => {

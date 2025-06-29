@@ -35,15 +35,14 @@ function sign(path: string, params: URLSearchParams, secretB64: string): string 
     return base64.encode(sig);
 }
 
-export async function krakenPost(path: string): Promise<any> {
-    const params = new URLSearchParams({ nonce: nextNonce() });
+export async function krakenPost(path: string, params: URLSearchParams): Promise<any> {
     const headers = {
         "API-Key": KEY,
         "API-Sign": sign(path, params, SECRET!),
         "Content-Type": "application/x-www-form-urlencoded",
     } as const;
 
-    info(`[Kraken] POST ${path}`);
+    info(`[Kraken] POST ${path} (Nonce: ${params.get('nonce')})`);
     const { data } = await axios.post(API_URL + path, params, { headers });
     if (data.error?.length) {
         error(`[Kraken] Error: ${data.error.join("; ")}`);
@@ -52,11 +51,34 @@ export async function krakenPost(path: string): Promise<any> {
     return data.result;
 }
 
-async function krakenGet(path: string, params: Record<string, any> = {}) {
-    info(`[Kraken] GET ${path}`);
-    const { data } = await axios.get(API_URL + path, { params });
-    if (data.error?.length) throw new Error(data.error.join(";"));
-    return data.result;
+export async function fetchAllLedgers(): Promise<any[]> {
+    info('[Kraken] Fetching all ledger entries with pagination...');
+    let offset = 0;
+    let allLedgers: any[] = [];
+    let totalCount = 0;
+
+    do {
+        const params = new URLSearchParams({ nonce: nextNonce(), ofs: offset.toString() });
+        const result = await krakenPost('/0/private/Ledgers', params);
+
+        const ledgerPage = Object.values(result.ledger ?? {});
+        allLedgers = allLedgers.concat(ledgerPage);
+
+        if (totalCount === 0) {
+            totalCount = Number(result.count);
+        }
+
+        offset += ledgerPage.length;
+        info(`[Kraken] Fetched ${allLedgers.length} of ${totalCount} ledger entries...`);
+    } while (offset < totalCount);
+
+    info(`[Kraken] Finished fetching. Total ledger entries ${allLedgers.length}`);
+    return allLedgers;
+}
+
+export async function fetchTradesHistory(): Promise<any> {
+    const params = new URLSearchParams({ nonce: nextNonce() });
+    return krakenPost('/0/private/TradesHistory', params);
 }
 
 export async function fetchPrices(pairs: string[]): Promise<Record<string, PriceQuote>> {

@@ -1,6 +1,6 @@
 import { dt } from "./utils/dt";
 import { mapKrakenAsset } from "./utils/assetMapper";
-import { info } from "./utils/logger";
+import { debug, info } from "./utils/logger";
 
 export interface InstantTrade {
     time: string;
@@ -72,8 +72,10 @@ export function getRewards(ledgerRows: any[]): RewardItem[] {
     const rewards = ledgerRows
         .filter((r: any) => (r.type === "reward" || r.subtype === "reward") && Number(r.amount) > 0)
         .map((r: any) => {
-            const amount = Number(r.amount);
-            const fee = Number(r.fee);
+            debug(`[RAW REWARD DETECTED] Asset: '${r.asset}', Amount: ${r.amount}, RefID: ${[r.refid]}`);
+
+            const amount = Number(r.amount) || 0;
+            const fee = Number(r.fee) || 0;
             const netVolume = amount -fee;
 
             return {
