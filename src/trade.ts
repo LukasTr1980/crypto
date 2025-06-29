@@ -76,10 +76,12 @@ function appendTotals(list: TradeItem[]): TradeResult {
     return { items: list, volumeTotal, costTotal, feeTotal };
 }
 
+const isEurPair = (p: string) => /E?EUR$/i.test(p);
+
 export async function showBuys(): Promise<TradeResult> {
     const proRows = await laodTradesRaw();
     const proItems = proRows
-                        .filter(r => r.type === 'buy')
+                        .filter(r => r.type === 'buy' && isEurPair(r.pair))
                         .map(mapTrade);
 
     const instantRows = await getInstantBuys();
@@ -90,7 +92,7 @@ export async function showBuys(): Promise<TradeResult> {
 
 export async function showSells(): Promise<TradeResult> {
     const items = (await laodTradesRaw())
-                    .filter(r => r.type === 'sell')
+                    .filter(r => r.type === 'sell' && isEurPair(r.pair))
                     .map(mapTrade);
     return appendTotals(items);
 }
@@ -116,6 +118,7 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
     }
 
     for (const r of proRows) {
+        if (!isEurPair(r.pair)) continue;
         const asset = mapKrakenAsset(r.pair);
         const b = ensure(asset);
         const vol = Number(r.vol);
