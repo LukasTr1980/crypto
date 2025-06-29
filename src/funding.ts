@@ -1,5 +1,6 @@
 import { dt } from './utils/dt';
 import { krakenPost } from './utils/kraken';
+import { info, error } from './utils/logger';
 
 export interface FundingItem {
     time: string;
@@ -36,7 +37,7 @@ export async function showDeposits(): Promise<FundingResult> {
     });
 
     const netTotal = gross - feeSum;
-    console.log(`[Funding] Deposits loaded: ${items.length}`);
+    info(`[Funding] Deposits loaded: ${items.length}`);
     return {
         items,
         gross,
@@ -65,7 +66,7 @@ export async function showWithdrawals(): Promise<FundingResult> {
     });
 
     const netTotal = gross + feeSum;
-    console.log(`[Funding] Withdrawals loaded: ${items.length}`);
+    info(`[Funding] Withdrawals loaded: ${items.length}`);
     return {
         items,
         gross,

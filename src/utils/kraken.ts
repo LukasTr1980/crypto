@@ -4,6 +4,7 @@ import { sha256, sha512 } from '@noble/hashes/sha2';
 import { hmac } from '@noble/hashes/hmac';
 import { base64 } from '@scure/base';
 import { nextNonce } from './nonce';
+import { info, error } from './logger';
 
 dotenv.config();
 
@@ -12,7 +13,7 @@ const API_URL = 'https://api.kraken.com';
 const KEY = process.env.KRAKEN_API_KEY;
 const SECRET = process.env.KRAKEN_API_SECRET;
 if (!KEY || !SECRET) {
-    console.error('[Fehler] API-Schlüssel fehlen (.env prüfen)');
+    error('[Fehler] API-Schlüssel fehlen (.env prüfen)');
     process.exit(1);
 }
 
@@ -38,17 +39,17 @@ export async function krakenPost(path: string): Promise<any> {
         "Content-Type": "application/x-www-form-urlencoded",
     } as const;
 
-    console.log(`[Kraken] POST ${path}`);
+    info(`[Kraken] POST ${path}`);
     const { data } = await axios.post(API_URL + path, params, { headers });
     if (data.error?.length) {
-        console.error(`[Kraken] Error: ${data.error.join("; ")}`);
+        error(`[Kraken] Error: ${data.error.join("; ")}`);
         throw new Error(data.error.join(";"));
     }
     return data.result;
 }
 
 async function krakenGet(path: string, params: Record<string, any> = {}) {
-    console.log(`[Kraken] GET ${path}`);
+    info(`[Kraken] GET ${path}`);
     const { data } = await axios.get(API_URL + path, { params });
     if (data.error?.length) throw new Error(data.error.join(";"));
     return data.result;
@@ -57,13 +58,13 @@ async function krakenGet(path: string, params: Record<string, any> = {}) {
 export async function fetchPrices(pairs: string[]): Promise<Record<string, PriceQuote>> {
     if (!pairs.length) return {};
 
-    console.log(`[Kraken] GET /0/public/Ticker?pair=${pairs.join(',')}`);
+    info(`[Kraken] GET /0/public/Ticker?pair=${pairs.join(',')}`);
     const { data } = await axios.get(`${API_URL}/0/public/Ticker`, {
         params: { pair: pairs.join(',') },
     });
 
     if (data.error?.length) {
-        console.error(`[Kraken] Ticker error: ${data.error.join("; ")}`);
+        error(`[Kraken] Ticker error: ${data.error.join("; ")}`);
         throw new Error(data.error.join("; "));
     }
 

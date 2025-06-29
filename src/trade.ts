@@ -2,6 +2,7 @@ import { krakenPost, fetchPrices } from "./utils/kraken";
 import { dt } from "./utils/dt";
 import { InstantTrade, getBaseFees, getInstantTrades, getRewards } from "./ledger";
 import { mapKrakenAsset, krakenPair, getPublicTickerPair, mapPublicPairToAsset } from "./utils/assetMapper";
+import { info, error } from "./utils/logger";
 
 export interface TradeItem {
     time: string;
@@ -44,7 +45,7 @@ export interface CoinSummary {
 async function loadTradesRaw() {
     const res = await krakenPost('/0/private/TradesHistory');
     const rows = Object.values(res.trades ?? {}) as any[];
-    console.log(`[Trades] Loaded ${rows.length} trades from API`);
+    info(`[Trades] Loaded ${rows.length} trades from API`);
     return rows;
 }
 
@@ -94,7 +95,7 @@ export async function showBuys(): Promise<TradeResult> {
 
     const instantRows = await getInstantTrades();
     const instantItems = instantRows.map(convertInstant);
-    console.log(`[Trades] Buys: ${proItems.length} pro, ${instantItems.length} instant`);
+    info(`[Trades] Buys: ${proItems.length} pro, ${instantItems.length} instant`);
     return appendTotals([...proItems, ...instantItems]);
 }
 
@@ -102,7 +103,7 @@ export async function showSells(): Promise<TradeResult> {
     const items = (await loadTradesRaw())
         .filter(r => r.type === 'sell' && isEurPair(r.pair))
         .map(mapTrade);
-    console.log(`[Trades] Sells loaded: ${items.length}`);
+    info(`[Trades] Sells loaded: ${items.length}`);
     return appendTotals(items);
 }
 

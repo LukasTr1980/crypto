@@ -1,6 +1,7 @@
 import { FundingResult } from './funding';
 import { TradeResult, CoinSummary } from './trade';
 import { fmt, fmtEuro } from './utils/fmt';
+import { info, error } from './utils/logger';
 
 interface FundingResponse {
     deposits: FundingResult;
@@ -165,7 +166,7 @@ async function load() {
         throw new Error('#content element not found');
     }
 
-    console.log('[Main] Loading page data');
+    info('[Main] Loading page data');
     try {
         const fundingRes = await fetch('/api/funding');
         if (!fundingRes.ok) {
@@ -199,11 +200,11 @@ async function load() {
             renderFundingTable(funding.withdrawals, 'Withdrawals');
 
         el.innerHTML = html;
-        console.log('[Main] Page data loaded');
+        info('[Main] Page data loaded');
 
     } catch (err: any) {
         el.innerHTML = `<p style="color:red">Fehler: ${err.message}</p>`;
-        console.error(err);
+        error(err);
     }
 
 }

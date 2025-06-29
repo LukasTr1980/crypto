@@ -2,44 +2,45 @@ import express from 'express';
 import path from 'path';
 import { showWithdrawals, showDeposits } from './funding';
 import { showBuys, showSells, showCoinSummary } from './trade';
+import { info, error } from './utils/logger';
 
 const app = express();
 const port = process.env.PORT ?? 3000;
 
 app.get('/api/funding', async (_req, res) => {
-    console.log('GET /api/funding');
+    info('GET /api/funding');
     try {
         const deposits = await showDeposits();
         const withdrawals = await showWithdrawals();
         res.json({ deposits, withdrawals });
-        console.log('[Funding API] success');
+        info('[Funding API] success');
     } catch (err: any) {
-        console.error('[Funding API] ➜', err.message);
+        error('[Funding API] ➜', err.message);
         res.status(500).json({ error: err.message });
     }
 });
 
 app.get('/api/trades', async (_req, res) => {
-    console.log('GET /api/trades');
+    info('GET /api/trades');
     try {
         const buys = await showBuys();
         const sells = await showSells();
         res.json({ buys, sells });
-        console.log('[Trades API] success');
+        info('[Trades API] success');
     } catch (err: any) {
-        console.error('[Trades API] ➜', err.message);
+        error('[Trades API] ➜', err.message);
         res.status(500).json({ error: err.message });
     }
 });
 
 app.get('/api/coin-summary', async (_req, res) => {
-    console.log('GET /api/coin-summary');
+    info('GET /api/coin-summary');
     try {
         const coinSummary = await showCoinSummary();
         res.json(coinSummary);
-        console.log('[CoinSummary API] success');
+        info('[CoinSummary API] success');
     } catch (err: any) {
-        console.error('[CoinSummary Api] ➜', err.message);
+        error('[CoinSummary Api] ➜', err.message);
         res.status(500).json({ error: err.message });
     }
 });
@@ -47,5 +48,5 @@ app.get('/api/coin-summary', async (_req, res) => {
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
+    info(`Server running on http://localhost:${port}`);
 });
