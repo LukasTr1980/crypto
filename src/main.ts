@@ -160,12 +160,12 @@ async function load() {
         const summaryRes = await fetch('/api/coin-summary');
         const summary: CoinSummary[] = await summaryRes.json();
 
-        let html = 
-            renderFundingTable(funding.deposits, 'Deposits') +
-            renderFundingTable(funding.withdrawals, 'Withdrawals') +
+        let html =
+            renderCoinTable(summary) +
             renderTradeTable(trades.buys, 'Buys') +
             renderTradeTable(trades.sells, 'Sells') +
-            renderCoinTable(summary);
+            renderFundingTable(funding.deposits, 'Deposits') +
+            renderFundingTable(funding.withdrawals, 'Withdrawals');
         
         el.innerHTML = html;
         console.log('[Main] Page data loaded');
