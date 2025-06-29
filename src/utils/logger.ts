@@ -15,3 +15,9 @@ export function info(...args: any[]) {
 export function error(...args: any[]) {
     log('ERROR', nativeConsoleError, ...args);
 }
+
+export function debug(...args: any[]) {
+    if (process.env.NODE_ENV === 'development') {
+        log('DEBUG', nativeConsoleLog, ...args);
+    }
+}
