@@ -1,7 +1,7 @@
 import { krakenPost, fetchPrices } from "./utils/kraken";
 import { dt } from "./utils/dt";
 import { InstantTrade, getBaseFees, getInstantTrades, getRewards } from "./ledger";
-import { mapKrakenAsset, krakenPair } from "./utils/assetMapper";
+import { mapKrakenAsset, krakenPair, getPublicTickerPair, mapPublicPairToAsset } from "./utils/assetMapper";
 
 export interface TradeItem {
     time: string;
@@ -106,6 +106,8 @@ export async function showSells(): Promise<TradeResult> {
     return appendTotals(items);
 }
 
+// trade.ts - DEBUGGING-VERSION zum Loggen der API-Antwort
+
 export async function showCoinSummary(): Promise<CoinSummary[]> {
     const proRows = await loadTradesRaw();
     const instantRows = await getInstantTrades();
@@ -114,109 +116,100 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
 
     const bucket: Record<string, CoinSummary> = {};
     const ensure = (a: string): CoinSummary => bucket[a] ??= {
-        asset: a,
-        buyVolume: 0,
-        rewardVolume: 0,
-        buyCost: 0,
-        avgBuyPrice: null,
-        sellVolume: 0,
-        sellProceeds: 0,
-        avgSellPrice: null,
-        netVolume: 0,
-        netSpend: 0,
-        feeTotal: 0,
-        coinFee: 0,
-        realised: 0,
-        unrealised: 0,
-        totalPL: 0,
-        priceNow: 0,
-        priceTs: "",
+        asset: a, buyVolume: 0, rewardVolume: 0, buyCost: 0, avgBuyPrice: null, sellVolume: 0, sellProceeds: 0, avgSellPrice: null, netVolume: 0, netSpend: 0, feeTotal: 0, coinFee: 0, realised: 0, unrealised: 0, totalPL: 0, priceNow: 0, priceTs: "",
     };
 
+    // --- Datensammlung (unverändert) ---
     for (const r of proRows) {
         if (!isEurPair(r.pair)) continue;
-
         const asset = mapKrakenAsset(r.pair);
         const b = ensure(asset);
         const vol = Number(r.vol);
         const cost = Number(r.cost);
         const fee = Number(r.fee);
-
         if (r.type === 'buy') {
             b.buyVolume += vol;
             b.buyCost += cost;
             b.feeTotal += fee;
         } else {
-            b.sellVolume += vol,
-                b.sellProceeds += cost;
+            b.sellVolume += vol;
+            b.sellProceeds += cost;
             b.feeTotal += fee;
         }
     }
-
     for (const t of instantRows) {
         const b = ensure(t.asset);
         if (t.volume > 0) {
             b.buyVolume += t.volume;
-            b.buyCost += t.cost
+            b.buyCost += t.cost;
         } else {
             b.sellVolume += -t.volume;
             b.sellProceeds += t.cost;
         }
     }
-
     for (const f of baseFees) {
         const b = ensure(f.asset);
         b.buyVolume -= f.volume;
         b.coinFee += f.volume;
     }
-
     for (const r of rewardRows) {
         const b = ensure(r.asset);
         b.rewardVolume += r.volume;
     }
-
     for (const b of Object.values(bucket)) {
         b.netVolume = b.buyVolume + b.rewardVolume - b.sellVolume - b.coinFee;
         b.netSpend = b.buyCost - b.sellProceeds + b.feeTotal;
+        if(b.buyVolume > 0) b.avgBuyPrice = b.buyCost / b.buyVolume;
+        if(b.sellVolume > 0) b.avgSellPrice = b.sellProceeds / b.sellVolume;
     }
 
-    const pairs = Object.keys(bucket).map(a => krakenPair(a)).filter((p): p is string => !!p);
-    const priceResp = await fetchPrices(pairs);
+    // --- Preisabfrage (unverändert) ---
+    const assetsInBucket = Object.keys(bucket);
+    const publicPairsToFetch = assetsInBucket
+        .map(asset => getPublicTickerPair(asset))
+        .filter((p): p is string => !!p);
 
-    const missingEUR = pairs.filter(p => !priceResp[p] && p.endsWith('EUR'));
-    if (missingEUR.length) {
-        // Fallback auf USD-Paare
-        const usdPairs = missingEUR.map(p => p.replace(/EUR$/, 'USD'));
-        const usdQuotes = await fetchPrices(usdPairs);
-        // USD→EUR Wechselkurs holen
-        const usdEur = (await fetchPrices(['USDEUR'])).USDEUR.price;
-        // EUR-Preise aus USD umrechnen
-        missingEUR.forEach(eurPair => {
-            const usdPair = eurPair.replace(/EUR$/, 'USD');
-            if (usdQuotes[usdPair]) {
-                priceResp[eurPair] = {
-                    price: usdQuotes[usdPair].price * usdEur,
-                    ts: usdQuotes[usdPair].ts,
-                };
-            }
-        });
-    }
-    const usdEur = priceResp['USDEUR']?.price ?? (await fetchPrices(['USDEUR'])).USDEUR.price;
-    priceResp['USDGEUR'] = { price: usdEur, ts: new Date().toISOString() };
-
-    for (const b of Object.values(bucket)) {
-        if (b.asset === 'USDG') {                  // Stable-Coin
-            const q = priceResp['USDEUR'] ?? { price: 1, ts: '' };
-            b.priceNow = q.price;
-            b.priceTs = q.ts;
-        } else {
-            const q = priceResp[krakenPair(b.asset) ?? ''] ?? { price: 0, ts: '' };
-            b.priceNow = q.price;
-            b.priceTs = q.ts;
+    const publicPriceResp = await fetchPrices(publicPairsToFetch);
+    const priceResp: Record<string, { price: number; ts: string }> = {};
+    for (const publicPair in publicPriceResp) {
+        const asset = mapPublicPairToAsset(publicPair);
+        const internalPair = krakenPair(asset);
+        if (internalPair) {
+            priceResp[internalPair] = publicPriceResp[publicPair];
         }
+    }
+
+    // --- USD-Kurs Abfrage (ROBUSTE VERSION) ---
+    const usdEurResponse = await fetchPrices([getPublicTickerPair('USD')!]);
+    
+    // Wir nehmen den ersten Wert aus der Antwort, egal wie der Schlüssel heißt.
+    const usdEurData = Object.values(usdEurResponse)[0];
+    const usdEurPrice = usdEurData?.price;
+    
+    if (!usdEurPrice) {
+        throw new Error("Konnte den USD-EUR-Wechselkurs nicht aus der Kraken-Antwort extrahieren.");
+    }
+    priceResp['USDGEUR'] = { price: usdEurPrice, ts: usdEurData.ts };
+
+    // --- Finale Berechnung (unverändert) ---
+    for (const b of Object.values(bucket)) {
+        let currentPrice = 0;
+        let priceTimestamp = '';
+        if (b.asset === 'USDG') {
+            currentPrice = priceResp['USDGEUR']?.price ?? 1;
+            priceTimestamp = priceResp['USDGEUR']?.ts ?? '';
+        } else {
+            const internalPair = krakenPair(b.asset) ?? '';
+            currentPrice = priceResp[internalPair]?.price ?? 0;
+            priceTimestamp = priceResp[internalPair]?.ts ?? '';
+        }
+        b.priceNow = currentPrice;
+        b.priceTs = priceTimestamp;
         b.unrealised = b.netVolume * b.priceNow;
         b.realised = -b.netSpend;
         b.totalPL = b.realised + b.unrealised;
     }
+    
     return Object.values(bucket).sort((a, b) => a.asset.localeCompare(b.asset));
 }
+

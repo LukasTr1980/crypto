@@ -170,6 +170,11 @@ async function load() {
         const trades: TradeResponse = await tradesRes.json();
         
         const summaryRes = await fetch('/api/coin-summary');
+        if (!summaryRes.ok) {
+            const errorBody = await summaryRes.json().catch(() => ({ message: `Server error: ${summaryRes.status}` }));
+            throw new Error(errorBody.message || `HTTP Error ${summaryRes.status}`);
+        }
+
         const summary: CoinSummary[] = await summaryRes.json();
 
         let html =
