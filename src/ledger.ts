@@ -1,6 +1,7 @@
 import { krakenPost } from "./utils/kraken";
 import { dt } from "./utils/dt";
 import { mapKrakenAsset } from "./utils/assetMapper";
+import { info } from "./utils/logger";
 
 export interface InstantTrade {
     time: string;
@@ -26,6 +27,7 @@ export interface RewardItem {
 }
 
 export async function getInstantTrades(): Promise<InstantTrade[]> {
+    info('[Ledger] Requesting instant trades');
     const { ledger } = await krakenPost('/0/private/Ledgers');
     const rows = Object.values(ledger ?? {}) as any[];
 
@@ -51,13 +53,15 @@ export async function getInstantTrades(): Promise<InstantTrade[]> {
 
         out.push({ time, asset, volume, cost, price, refid: (coinRecv ?? coinSpend).refid });
     }
+    info(`[Ledger] Loaded ${out.length} items`);
     return out;
 }
 
 export async function getBaseFees(): Promise<BaseFee[]> {
+    info('[Ledger] Requesting base fees');
     const { ledger } = await krakenPost('/0/private/Ledgers');
-    return Object.values(ledger ?? {})
-        .filter((r: any) => 
+    const items = Object.values(ledger ?? {})
+        .filter((r: any) =>
             r.type === 'trade' &&
             r.fee && Number(r.fee) > 0 &&
             r.asset !== 'EUR' && r.asset !== 'ZEUR'
@@ -68,11 +72,14 @@ export async function getBaseFees(): Promise<BaseFee[]> {
             volume: Number(r.fee),
             refid: r.refid
         }));
+    info(`[Ledger] Loaded ${items.length} items`);
+    return items;
 }
 
 export async function getRewards(): Promise<RewardItem[]> {
+    info('[Ledger] Requesting rewards');
     const { ledger } = await krakenPost("/0/private/Ledgers");
-    return Object.values(ledger ?? {})
+    const items = Object.values(ledger ?? {})
         .filter((r: any) => r.type === "reward" && Number(r.amount) > 0)
         .map((r: any) => ({
             time: dt(r.time),
@@ -80,4 +87,6 @@ export async function getRewards(): Promise<RewardItem[]> {
             volume: Number(r.amount),
             refid: r.refid,
         }));
+    info(`[Ledger] Loaded ${items.length} items`);
+    return items;
 }
