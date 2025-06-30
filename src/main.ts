@@ -2,6 +2,7 @@ import { FundingResult } from './funding';
 import { TradeResult, CoinSummary } from './trade';
 import { fmt, fmtEuro } from './utils/fmt';
 import { info, error } from './utils/logger';
+import { EarnTransactions } from './ledger';
 
 interface FundingResponse {
     deposits: FundingResult;
@@ -171,6 +172,39 @@ function renderCoinTable(list: CoinSummary[]) {
     return `<section><h2>Per-Coin Totals</h2><table><thead>${header}</thead><tbody>${body}</tbody></table></section>`;
 }
 
+function renderEarnTable(items: EarnTransactions[]) {
+    const header =
+        '<tr><th>Datum</th><th>Asset</th><th>Typ</th>' +
+        '<th class="num">Betrag</th>' +
+        '<th class="num">Gebühr</th>' +
+        '<th>Ref ID</th></tr>';
+
+    const body = items
+        .map(i => 
+            row (
+                [
+                    i.time,
+                    i.asset,
+                    i.type,
+                    fmt(i.amount, 8),
+                    fmt(i.fee, 8),
+                    i.refid,
+                ],
+                [3, 4]
+            )
+        )
+        .join('');
+
+        return `
+        <section>
+            <h2>Earn Transactions</h2>
+            <table>
+                <thead>${header}</thead>
+                <tbody>${body}</tbody>
+            </table>
+        </section>`;
+}
+
 async function load() {
     const el = document.getElementById('content');
     if (!el) {
@@ -209,8 +243,18 @@ async function load() {
         const summary: CoinSummary[] = await summaryRes.json();
         info(`[Main] /api/coin-summary OK: ${summary.length} coins`);
 
+        info('[Main] Fetching /api/earn-transactions');
+        const earnRes = await fetch('/api/earn-transactions');
+        if (!earnRes.ok) {
+            const errorBody = await earnRes.json().catch(() => ({ message: `Server Error: ${earnRes.status}` }));
+            throw new Error(errorBody.message || `HTTP Error ${earnRes.status}`);
+        }
+        const earnTransactions: EarnTransactions[] = await earnRes.json();
+        info(`[Main] /api/earn-transactions OK: ${earnTransactions.length} items`);
+
         let html =
             renderCoinTable(summary) +
+            renderEarnTable(earnTransactions) +
             renderTradeTable(trades.buys, 'Buys') +
             renderTradeTable(trades.sells, 'Sells') +
             renderFundingTable(funding.deposits, 'Deposits') +

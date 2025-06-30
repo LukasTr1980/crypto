@@ -61,7 +61,10 @@ export async function fetchAllLedgers(): Promise<any[]> {
         const params = new URLSearchParams({ nonce: nextNonce(), ofs: offset.toString() });
         const result = await krakenPost('/0/private/Ledgers', params);
 
-        const ledgerPage = Object.values(result.ledger ?? {});
+        const ledgerPage = Object.entries(result.ledger ?? {}).map(([txid, data]) => ({
+            txid,
+            ...(data as Object)
+        }));
         allLedgers = allLedgers.concat(ledgerPage);
 
         if (totalCount === 0) {

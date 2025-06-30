@@ -3,6 +3,8 @@ import path from 'path';
 import { showWithdrawals, showDeposits } from './funding';
 import { showBuys, showSells, showCoinSummary } from './trade';
 import { info, error } from './utils/logger';
+import { fetchAllLedgers } from './utils/kraken';
+import { getEarnTransactions } from './ledger';
 
 const app = express();
 const port = process.env.PORT ?? 3000;
@@ -41,6 +43,19 @@ app.get('/api/coin-summary', async (_req, res) => {
         info('[CoinSummary API] success');
     } catch (err: any) {
         error('[CoinSummary Api] ➜', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/earn-transactions', async (_req, res) => {
+    info('GET /api/earn-transactions');
+    try {
+        const ledgers = await fetchAllLedgers();
+        const transactions = await getEarnTransactions(ledgers);
+        res.json(transactions);
+        info('[Earn API] success');
+    } catch (err: any) {
+        error('[Earn API] ➜', err.message);
         res.status(500).json({ error: err.message });
     }
 });

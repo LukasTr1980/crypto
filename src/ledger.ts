@@ -25,6 +25,15 @@ export interface RewardItem {
     refid: string;
 }
 
+export interface EarnTransactions {
+    time: string;
+    asset: string;
+    type: 'Prämie' | 'Überweisung';
+    amount: number;
+    fee: number;
+    refid: string;
+}
+
 export function getInstantTrades(ledgerRows: any[]): InstantTrade[] {
     info('[Ledger] getInstantTrades start');
     const bucket: Record<string, any[]> = {};
@@ -87,4 +96,38 @@ export function getRewards(ledgerRows: any[]): RewardItem[] {
         });
     info(`[Ledger] Found ${rewards.length} reward items (inlc. Earn Rewards).`);
     return rewards;
+}
+
+export function getEarnTransactions(ledgerRows: any[]): EarnTransactions[] {
+    info("[Ledger] getEarnTransactions (Final Version 3.0)");
+
+    const transactions = ledgerRows
+        .filter((r: any) =>
+            r.type === "reward" || r.type === "staking" ||
+            (r.type === "transfer" && r.subtype === "autoallocate" && Number(r.amount) > 0)
+        )
+        .map((r: any): EarnTransactions => {
+            // GEÄNDERT: Wir speichern Brutto-Betrag und Gebühr getrennt
+            const grossAmount = Number(r.amount) || 0;
+            const fee = Number(r.fee) || 0;
+            return {
+                time: dt(r.time),
+                asset: mapKrakenAsset(r.asset),
+                type: (r.type === 'reward' || r.type === 'staking') ? 'Prämie' : 'Überweisung',
+                amount: grossAmount, // <-- Dies ist jetzt der Brutto-Betrag
+                fee: fee,           // <-- Dies ist die Gebühr
+                refid: r.txid,
+            }
+        })
+        .sort((a, b) => {
+            const parseGermanDate = (dateString: string) => {
+                const [datePart, timePart] = dateString.split(' ');
+                const [day, month, year] = datePart.split('.');
+                return new Date(`${year}-${month}-${day}T${timePart}`);
+            };
+            return parseGermanDate(b.time).getTime() - parseGermanDate(a.time).getTime();
+        });
+
+    info(`[Ledger] Korrekt gefiltert: ${transactions.length} Earn-Transaktionen.`);
+    return transactions;
 }
