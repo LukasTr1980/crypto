@@ -5,6 +5,7 @@ import { info, error } from './utils/logger';
 import { EarnTransactions } from './ledger';
 
 interface AllDataResponse {
+    portfolioValue: number;
     deposits: FundingResult;
     withdrawals: FundingResult;
     buys: TradeResult;
@@ -204,6 +205,17 @@ function renderEarnTable(items: EarnTransactions[]) {
         </section>`;
 }
 
+function renderBalance (value: number) {
+    const el = document.getElementById('portfolio-balance');
+    if (!el) {
+        return;
+    }
+
+    el.innerHTML = `
+    <span>Current Balance</span>
+    <div>${fmtEuro(value, 2)}</div>
+    `;
+}
 
 async function load() {
     const el = document.getElementById('content');

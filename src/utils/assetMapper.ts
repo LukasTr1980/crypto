@@ -36,6 +36,7 @@ export function getPublicTickerPair(asset: string): string | null {
         case 'SOL': return 'SOLEUR';
         case 'PEPE': return 'PEPEEUR';
         case 'USD': return 'EURUSD';
+        case 'EUR': return null;
         case 'USDG': return null;
 
         default: return `${asset}EUR`;

@@ -3,9 +3,9 @@ import path from 'path';
 import { fetchDepositsRaw, fetchWithdrawalsRaw, processDeposits, processWithdrawals } from './funding';
 import { processBuys, processSells, processCoinSummary } from './trade';
 import { info, error } from './utils/logger';
-import { fetchAllLedgers, fetchTradesHistory, fetchPrices } from './utils/kraken';
+import { fetchAllLedgers, fetchTradesHistory, fetchPrices, fetchAccountBalance } from './utils/kraken';
 import { getEarnTransactions } from './ledger';
-import { getPublicTickerPair, mapPublicPairToAsset, krakenPair } from './utils/assetMapper';
+import { getPublicTickerPair, mapPublicPairToAsset, krakenPair, mapKrakenAsset } from './utils/assetMapper';
 
 const app = express();
 const port = process.env.PORT ?? 3000;
@@ -18,6 +18,7 @@ app.get('/api/all-data', async (_req, res) => {
         const tradesRaw = Object.values(tradesHistory.trades ?? {});
         const depositsRaw = await fetchDepositsRaw();
         const withdrawalsRaw = await fetchWithdrawalsRaw();
+        const accountBalance = await fetchAccountBalance();
         
         info(`Fetched ${ledgers.length} ledgers, ${tradesRaw.length} trades, ${depositsRaw.length} deposits, ${withdrawalsRaw.length} withdrawals.`);
 
@@ -30,7 +31,8 @@ app.get('/api/all-data', async (_req, res) => {
         const allTradesAssets = new Set([
             ...buys.items.map(t => t.asset),
             ...sells.items.map(t => t.asset),
-            ...earnTransactions.map(t => t.asset)
+            ...earnTransactions.map(t => t.asset),
+            ...Object.keys(accountBalance).map(mapKrakenAsset),
         ]);
 
         const publicPairsToFetch = [...allTradesAssets]
@@ -54,9 +56,31 @@ app.get('/api/all-data', async (_req, res) => {
             priceData['USDGEUR'] = publicPrices['EURUSD'];
         }
 
+        let portofolioValue = 0;
+        for (const [assetCode, balanceStr] of Object.entries(accountBalance)) {
+            const balance = parseFloat(balanceStr);
+            if (balance === 0) continue;
+
+            const asset = mapKrakenAsset(assetCode);
+            if (asset === 'EUR') {
+                portofolioValue += balance;
+                continue;
+            }
+
+            const pair = krakenPair(asset);
+            const quote = priceData[pair!];
+            if (quote?.price) {
+                portofolioValue += balance * quote.price;
+            } else {
+                info(`[Balance] No price found for asset ${asset} (code: ${assetCode}, pair: ${pair})`);
+            }
+        }
+        info(`[Balance] Calculated total portfolio value: €${portofolioValue.toFixed(2)}`);
+
         const coinSummary = processCoinSummary(tradesRaw, ledgers, priceData);
 
         res.json({
+            portofolioValue,
             deposits,
             withdrawals,
             buys,
