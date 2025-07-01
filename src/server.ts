@@ -10,6 +10,11 @@ import { getPublicTickerPair, mapPublicPairToAsset, krakenPair } from './utils/a
 const app = express();
 const port = process.env.PORT ?? 3000;
 
+app.get('/api/health', (_req, res) => {
+    info('GET /api/health - Health check called successfully!');
+    res.json({ status: 'ok' });
+});
+
 app.get('/api/all-data', async (_req, res) => {
     info('GET /api/all-data - Starting data aggregation');
     try {
