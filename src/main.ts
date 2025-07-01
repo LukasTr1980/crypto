@@ -204,6 +204,7 @@ function renderEarnTable(items: EarnTransactions[]) {
         </section>`;
 }
 
+
 async function load() {
     const el = document.getElementById('content');
     if (!el) {
@@ -232,7 +233,9 @@ async function load() {
         el.innerHTML = html;
         info('[Main] Page data loaded and rendered');
     } catch (err: any) {
-        el.innerHTML = `<p stlye="color:red">Error while loading data: ${err.message}</p>`;
+        el.innerHTML = `<p style="color:red">Error while loading data: ${err.message}</p>`;
         error(err);
     }
 }
+
+document.addEventListener('DOMContentLoaded', load);

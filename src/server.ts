@@ -10,29 +10,17 @@ import { getPublicTickerPair, mapPublicPairToAsset, krakenPair } from './utils/a
 const app = express();
 const port = process.env.PORT ?? 3000;
 
-app.get('/api/health', (_req, res) => {
-    info('GET /api/health - Health check called successfully!');
-    res.json({ status: 'ok' });
-});
-
 app.get('/api/all-data', async (_req, res) => {
     info('GET /api/all-data - Starting data aggregation');
     try {
-        info('Fetching all raw data from Kraken...');
-        const [
-            ledgers,
-            tradesRaw,
-            depositsRaw,
-            withdrawalsRaw
-        ] = await Promise.all([
-            fetchAllLedgers(),
-            fetchTradesHistory().then(r => Object.values(r.trades ?? {})),
-            fetchDepositsRaw(),
-            fetchWithdrawalsRaw()
-        ]);
+        const ledgers = await fetchAllLedgers();
+        const tradesHistory = await fetchTradesHistory();
+        const tradesRaw = Object.values(tradesHistory.trades ?? {});
+        const depositsRaw = await fetchDepositsRaw();
+        const withdrawalsRaw = await fetchWithdrawalsRaw();
+        
         info(`Fetched ${ledgers.length} ledgers, ${tradesRaw.length} trades, ${depositsRaw.length} deposits, ${withdrawalsRaw.length} withdrawals.`);
 
-        info('Processing raw data...');
         const deposits = processDeposits(depositsRaw);
         const withdrawals = processWithdrawals(withdrawalsRaw);
         const buys = processBuys(tradesRaw, ledgers);
@@ -53,7 +41,6 @@ app.get('/api/all-data', async (_req, res) => {
             publicPairsToFetch.push('EURUSD');
         }
 
-        info(`Fetching current prices for pairs: ${publicPairsToFetch.join(',')}`);
         const publicPrices = await fetchPrices(publicPairsToFetch);
 
         const priceData: Record<string, any> = {};
@@ -78,6 +65,7 @@ app.get('/api/all-data', async (_req, res) => {
             earnTransactions
         });
         info('[All-Data API] Success');
+
     } catch (err: any) {
         error('[All-Data API] ->', err.message, err.stack);
         res.status(500).json({ error: err.message });
