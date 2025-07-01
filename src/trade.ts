@@ -194,17 +194,18 @@ export function processCoinSummary(
         let currentPrice = 0;
         let priceTimestamp = '';
 
-        const internalPair = krakenPair(b.asset) ?? '';
-        const quote = priceData[internalPair] ?? priceData[`${b.asset}EUR`];
-
-        if (quote) {
-            currentPrice += quote.price;
-            priceTimestamp = quote.ts;
-        } else if (b.asset === 'USDG') {
-            const usdQuote = priceData['EURUSD'];
+        if (b.asset === 'USDG') {
+            const usdQuote = priceData['USDGEUR'];
             if (usdQuote) {
                 currentPrice = usdQuote.price;
                 priceTimestamp = usdQuote.ts;
+            }
+        } else {
+            const internalPair = krakenPair(b.asset) ?? '';
+            const quote = priceData[internalPair] ?? priceData[`${b.asset}EUR`];
+            if (quote) {
+                currentPrice = quote.price;
+                priceTimestamp = quote.ts;
             }
         }
 

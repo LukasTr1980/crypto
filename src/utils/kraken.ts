@@ -56,6 +56,7 @@ export async function fetchAllLedgers(): Promise<any[]> {
     let offset = 0;
     let allLedgers: any[] = [];
     let totalCount = 0;
+    let ledgerPage: any[] = [];
 
     do {
         const params = new URLSearchParams({ nonce: nextNonce(), ofs: offset.toString() });
@@ -73,7 +74,8 @@ export async function fetchAllLedgers(): Promise<any[]> {
 
         offset += ledgerPage.length;
         info(`[Kraken] Fetched ${allLedgers.length} of ${totalCount} ledger entries...`);
-    } while (offset < totalCount);
+
+    } while (offset < totalCount && ledgerPage.length > 0);
 
     info(`[Kraken] Finished fetching. Total ledger entries ${allLedgers.length}`);
     return allLedgers;
