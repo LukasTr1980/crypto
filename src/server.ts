@@ -1,61 +1,80 @@
 import express from 'express';
 import path from 'path';
-import { showWithdrawals, showDeposits } from './funding';
-import { showBuys, showSells, showCoinSummary } from './trade';
+import { fetchDepositsRaw, fetchWithdrawalsRaw, processDeposits, processWithdrawals } from './funding';
+import { processBuys, processSells, processCoinSummary } from './trade';
 import { info, error } from './utils/logger';
-import { fetchAllLedgers } from './utils/kraken';
+import { fetchAllLedgers, fetchTradesHistory, fetchPrices } from './utils/kraken';
 import { getEarnTransactions } from './ledger';
+import { getPublicTickerPair, mapPublicPairToAsset, krakenPair } from './utils/assetMapper';
 
 const app = express();
 const port = process.env.PORT ?? 3000;
 
-app.get('/api/funding', async (_req, res) => {
-    info('GET /api/funding');
+app.get('/api/all-data', async (_req, res) => {
+    info('GET /api/all-data - Starting data aggregation');
     try {
-        const deposits = await showDeposits();
-        const withdrawals = await showWithdrawals();
-        res.json({ deposits, withdrawals });
-        info('[Funding API] success');
-    } catch (err: any) {
-        error('[Funding API] ➜', err.message);
-        res.status(500).json({ error: err.message });
-    }
-});
+        info('Fetching all raw data from Kraken...');
+        const [
+            ledgers,
+            tradesRaw,
+            depositsRaw,
+            withdrawalsRaw
+        ] = await Promise.all([
+            fetchAllLedgers(),
+            fetchTradesHistory().then(r => Object.values(r.trades ?? {})),
+            fetchDepositsRaw(),
+            fetchWithdrawalsRaw()
+        ]);
+        info(`Fetched ${ledgers.length} ledergs, ${tradesRaw.length} trades, ${depositsRaw.length} deposits, ${withdrawalsRaw.length} withdrawals.`);
 
-app.get('/api/trades', async (_req, res) => {
-    info('GET /api/trades');
-    try {
-        const buys = await showBuys();
-        const sells = await showSells();
-        res.json({ buys, sells });
-        info('[Trades API] success');
-    } catch (err: any) {
-        error('[Trades API] ➜', err.message);
-        res.status(500).json({ error: err.message });
-    }
-});
+        info('Processing raw data...');
+        const deposits = processDeposits(depositsRaw);
+        const withdrawals = processWithdrawals(withdrawalsRaw);
+        const buys = processBuys(tradesRaw, ledgers);
+        const sells = processSells(tradesRaw, ledgers);
+        const earnTransactions = getEarnTransactions(ledgers);
 
-app.get('/api/coin-summary', async (_req, res) => {
-    info('GET /api/coin-summary');
-    try {
-        const coinSummary = await showCoinSummary();
-        res.json(coinSummary);
-        info('[CoinSummary API] success');
-    } catch (err: any) {
-        error('[CoinSummary Api] ➜', err.message);
-        res.status(500).json({ error: err.message });
-    }
-});
+        const allTradesAssets = new Set([
+            ...buys.items.map(t => t.asset),
+            ...sells.items.map(t => t.asset),
+            ...earnTransactions.map(t => t.asset)
+        ]);
 
-app.get('/api/earn-transactions', async (_req, res) => {
-    info('GET /api/earn-transactions');
-    try {
-        const ledgers = await fetchAllLedgers();
-        const transactions = await getEarnTransactions(ledgers);
-        res.json(transactions);
-        info('[Earn API] success');
+        const publicPairsToFetch = [...allTradesAssets]
+            .map(asset => getPublicTickerPair(asset))
+            .filter((p): p is string => !!p);
+        
+        if (!publicPairsToFetch.includes('EURUSD')) {
+            publicPairsToFetch.push('EURUSD');
+        }
+
+        info(`Fetching current prices for pairs: ${publicPairsToFetch.join(',')}`);
+        const publicPrices = await fetchPrices(publicPairsToFetch);
+
+        const priceData: Record<string, any> = {};
+        for (const [publicPair, quote] of Object.entries(publicPrices)) {
+            const asset = mapPublicPairToAsset(publicPair);
+            const internalPair = krakenPair(asset) ?? publicPair;
+            priceData[internalPair] = quote;
+        }
+
+        if(publicPrices['EURUSD']) {
+            priceData['USDGEUR'] = publicPrices['EURUSD'];
+        }
+
+        const coinSummary = processCoinSummary(tradesRaw, ledgers, priceData);
+
+        res.json({
+            deposits,
+            withdrawals,
+            buys,
+            sells,
+            coinSummary,
+            earnTransactions
+        });
+        info('[All-Data API] Success');
     } catch (err: any) {
-        error('[Earn API] ➜', err.message);
+        error('[All-Data API] ->', err.message, err.stack);
         res.status(500).json({ error: err.message });
     }
 });

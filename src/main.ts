@@ -4,14 +4,13 @@ import { fmt, fmtEuro } from './utils/fmt';
 import { info, error } from './utils/logger';
 import { EarnTransactions } from './ledger';
 
-interface FundingResponse {
+interface AllDataResponse {
     deposits: FundingResult;
     withdrawals: FundingResult;
-}
-
-interface TradeResponse {
     buys: TradeResult;
     sells: TradeResult;
+    coinSummary: CoinSummary[];
+    earnTransactions: EarnTransactions[];
 }
 
 function row(cells: (string | number)[], numIdx: number[] = []) {
@@ -211,63 +210,29 @@ async function load() {
         throw new Error('#content element not found');
     }
 
-    info('[Main] Loading page data');
+    info('[Main] Loading all page data from single endpoint');
     try {
-        info('[Main] Fetching /api/funding');
-        const fundingRes = await fetch('/api/funding');
-        if (!fundingRes.ok) {
-            const body = await fundingRes.json().catch(() => ({}));
-            throw new Error(body.error ?? `HTTP ${fundingRes.status}`);
+        const res = await fetch('/api/all-data');
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({ error: `Servererror: ${res.status}` }));
+            throw new Error(body.error ?? `HTTP ${res.status}`);
         }
 
-        const funding: FundingResponse = await fundingRes.json();
-        info(`[Main] /api/funding OK: ${funding.deposits.items.length} deposits, ${funding.withdrawals.items.length} withdrawals`);
-
-        info('[Main] Fetching /api/trades');
-        const tradesRes = await fetch('/api/trades');
-        if (!tradesRes.ok) {
-            const body = await tradesRes.json().catch(() => ({}));
-            throw new Error(body.error ?? `HTTP ${tradesRes.status}`);
-        }
-
-        const trades: TradeResponse = await tradesRes.json();
-        info(`[Main] /api/trades OK: ${trades.buys.items.length} buys, ${trades.sells.items.length} sells`);
-
-        info('[Main] Fetching /api/coin-summary');
-        const summaryRes = await fetch('/api/coin-summary');
-        if (!summaryRes.ok) {
-            const errorBody = await summaryRes.json().catch(() => ({ message: `Server error: ${summaryRes.status}` }));
-            throw new Error(errorBody.message || `HTTP Error ${summaryRes.status}`);
-        }
-
-        const summary: CoinSummary[] = await summaryRes.json();
-        info(`[Main] /api/coin-summary OK: ${summary.length} coins`);
-
-        info('[Main] Fetching /api/earn-transactions');
-        const earnRes = await fetch('/api/earn-transactions');
-        if (!earnRes.ok) {
-            const errorBody = await earnRes.json().catch(() => ({ message: `Server Error: ${earnRes.status}` }));
-            throw new Error(errorBody.message || `HTTP Error ${earnRes.status}`);
-        }
-        const earnTransactions: EarnTransactions[] = await earnRes.json();
-        info(`[Main] /api/earn-transactions OK: ${earnTransactions.length} items`);
+        const data: AllDataResponse = await res.json();
+        info('[Main] /api/all-data OK');
 
         let html =
-            renderCoinTable(summary) +
-            renderEarnTable(earnTransactions) +
-            renderTradeTable(trades.buys, 'Buys') +
-            renderTradeTable(trades.sells, 'Sells') +
-            renderFundingTable(funding.deposits, 'Deposits') +
-            renderFundingTable(funding.withdrawals, 'Withdrawals');
+            renderCoinTable(data.coinSummary) +
+            renderEarnTable(data.earnTransactions) +
+            renderTradeTable(data.buys, 'Buys') +
+            renderTradeTable(data.sells, 'Sells') +
+            renderFundingTable(data.deposits, 'Deposits') +
+            renderFundingTable(data.withdrawals, 'Withdrawals');
 
         el.innerHTML = html;
-        info('[Main] Page data loaded');
-
+        info('[Main] Page data loaded and rendered');
     } catch (err: any) {
-        el.innerHTML = `<p style="color:red">Fehler: ${err.message}</p>`;
+        el.innerHTML = `<p stlye="color:red">Error while loading data: ${err.message}</p>`;
         error(err);
     }
-
 }
-
-load();

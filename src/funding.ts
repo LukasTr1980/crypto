@@ -18,13 +18,23 @@ export interface FundingResult {
     netTotal: number;
 }
 
-export async function showDeposits(): Promise<FundingResult> {
-    info('[Funding] showDeposits start');
+export async function fetchDepositsRaw(): Promise<any[]> {
+    info('[Funding] Fetching raw deposits data');
     const params = new URLSearchParams({ nonce: nextNonce() });
-    const res = await krakenPost('/0/private/DepositStatus', params);
+    return await krakenPost('/0/private/DepositStatus', params);
+}
+
+export async function fetchWithdrawalsRaw(): Promise<any[]> {
+    info('[Funding] Fetching raw withdrawal data');
+    const params = new URLSearchParams({ nonce: nextNonce() });
+    return await krakenPost('/0/private/WithdrawStatus', params);
+}
+
+export function processDeposits(rawDeposits: any[]): FundingResult {
+    info('[Funding] Processing deposits');
     let gross = 0, feeSum = 0;
 
-    const items = res.map((d: any) => {
+    const items = rawDeposits.map((d: any) => {
         const amount = Number(d.amount);
         const fee = Number(d.fee);
         const net = amount - fee;
@@ -40,7 +50,7 @@ export async function showDeposits(): Promise<FundingResult> {
     });
 
     const netTotal = gross - feeSum;
-    info(`[Funding] Deposits loaded: ${items.length}`);
+    info(`[Funding] Deposits processed: ${items.length}`);
     return {
         items,
         gross,
@@ -49,13 +59,11 @@ export async function showDeposits(): Promise<FundingResult> {
     };
 }
 
-export async function showWithdrawals(): Promise<FundingResult> {
-    info('[Funding] showWithdrawals start');
-    const params = new URLSearchParams({ nonce: nextNonce() });
-    const res = await krakenPost('/0/private/WithdrawStatus', params);
+export function processWithdrawals(rawWithdrawals: any[]): FundingResult {
+    info('[Funding] Processing withdrawals');
     let gross = 0, feeSum = 0;
 
-    const items = res.map((w: any) => {
+    const items = rawWithdrawals.map((w: any) => {
         const amount = Number(w.amount);
         const fee = Number(w.fee);
         const net = amount + fee;
@@ -71,7 +79,7 @@ export async function showWithdrawals(): Promise<FundingResult> {
     });
 
     const netTotal = gross + feeSum;
-    info(`[Funding] Withdrawals loaded: ${items.length}`);
+    info(`[Funding] Withdrawals processed: ${items.length}`);
     return {
         items,
         gross,

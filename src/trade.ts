@@ -1,4 +1,4 @@
-import { fetchTradesHistory, fetchPrices, fetchAllLedgers } from "./utils/kraken";
+import { fetchTradesHistory, fetchPrices, fetchAllLedgers, PriceQuote } from "./utils/kraken";
 import { dt } from "./utils/dt";
 import { InstantTrade, getBaseFees, getInstantTrades, getRewards } from "./ledger";
 import { mapKrakenAsset, krakenPair, getPublicTickerPair, mapPublicPairToAsset } from "./utils/assetMapper";
@@ -43,14 +43,6 @@ export interface CoinSummary {
     totalPLPercent: number | null;
 }
 
-async function loadTradesRaw() {
-    info('[Trades] loadTradesRaw start');
-    const res = await fetchTradesHistory();
-    const rows = Object.values(res.trades ?? {}) as any[];
-    info(`[Trades] Loaded ${rows.length} trades from API`);
-    return rows;
-}
-
 function mapTrade(raw: any): TradeItem {
     return {
         time: dt(raw.time),
@@ -69,9 +61,9 @@ function convertInstant(i: InstantTrade): TradeItem {
         time: i.time,
         asset: mapKrakenAsset(i.asset),
         pair: `${mapKrakenAsset(i.asset)}EUR`,
-        type: 'buy',
+        type: i.volume > 0 ? 'buy' : 'sell',
         price: i.price,
-        volume: i.volume,
+        volume: Math.abs(i.volume),
         cost: i.cost,
         fee: 0
     };
@@ -89,46 +81,49 @@ function appendTotals(list: TradeItem[]): TradeResult {
 
 const isEurPair = (p: string) => /E?EUR$/i.test(p);
 
-export async function showBuys(): Promise<TradeResult> {
-    info('[Trades] showBuys start');
-    const proRows = await loadTradesRaw();
-    const ledgerRows = await fetchAllLedgers();
-
-    const proItems = proRows
+export function processBuys(tradesRaw: any[], ledgerRows: any[]): TradeResult {
+    info('[Trades] Processing buys');
+    const proItems = tradesRaw
         .filter(r => r.type === 'buy' && isEurPair(r.pair))
         .map(mapTrade);
 
     const instantRows = getInstantTrades(ledgerRows);
-    const instantItems = instantRows.map(convertInstant);
-    info(`[Trades] Buys: ${proItems.length} pro, ${instantItems.length} instant`);
+    const instantItems = instantRows
+        .filter(t => t.volume > 0)
+        .map(convertInstant);
+
+    info(`[Trades] Buys processed: ${proItems.length} pro, ${instantItems.length} instant`);
     return appendTotals([...proItems, ...instantItems]);
 }
 
-export async function showSells(): Promise<TradeResult> {
-    info('[Trades] showSells start');
-    const items = (await loadTradesRaw())
+export function processSells(tradesRaw: any[], ledgerRows: any[]): TradeResult {
+    info('[Trades] Processing sells');
+    const proItems = tradesRaw
         .filter(r => r.type === 'sell' && isEurPair(r.pair))
         .map(mapTrade);
-    info(`[Trades] Sells loaded: ${items.length}`);
-    return appendTotals(items);
+
+    const instantRows = getInstantTrades(ledgerRows);
+    const instantItems = instantRows
+        .filter(t => t.volume < 0)
+        .map(convertInstant);
+
+    info(`[Trades] Sells processed: ${proItems.length} pro, ${instantItems.length} instant`);
+    return appendTotals([...proItems, ...instantItems]);
 }
 
 // trade.ts - DEBUGGING-VERSION zum Loggen der API-Antwort
 
-export async function showCoinSummary(): Promise<CoinSummary[]> {
-    const proRows = await loadTradesRaw();
+export function processCoinSummary(
+    proRows: any[],
+    ledgerRows: any[],
+    priceData: Record<string, PriceQuote>
+): CoinSummary[] {
+    info('[Trades] Processing coin summary');
 
-    const ledgerRows = await fetchAllLedgers();
 
-    info(`[Main] Loaded ${ledgerRows.length} ledger entries from API`);
-
-
-    const instantRows = await getInstantTrades(ledgerRows);
-    const baseFees = await getBaseFees(ledgerRows);
-    const rewardRows = await getRewards(ledgerRows);
-
-    const solRewards = rewardRows.filter(r => /SOL/.test(r.asset));
-    debug('Inspection of SOL-Rewards before handling:', solRewards);
+    const instantRows = getInstantTrades(ledgerRows);
+    const baseFees = getBaseFees(ledgerRows);
+    const rewardRows = getRewards(ledgerRows);
 
     const bucket: Record<string, CoinSummary> = {};
     const ensure = (a: string): CoinSummary => bucket[a] ??= {
@@ -152,7 +147,6 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
         totalPLPercent: null,
     };
 
-    // --- Datensammlung (unverändert) ---
     for (const r of proRows) {
         if (!isEurPair(r.pair)) continue;
         const asset = mapKrakenAsset(r.pair);
@@ -181,23 +175,10 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
         }
     }
     for (const f of baseFees) {
-        const b = ensure(f.asset);
-        b.coinFee += f.volume;
+        ensure(f.asset).coinFee += f.volume;
     }
     for (const r of rewardRows) {
-        const b = ensure(r.asset);
-        b.rewardVolume += r.volume;
-    }
-
-    const solBucket = bucket['SOL'];
-    if (solBucket) {
-        debug('SOL Bucket Status after aggregation', {
-            buyVolume: solBucket.buyVolume,
-            sellVolume: solBucket.sellVolume,
-            rewardVolume: solBucket.rewardVolume,
-            coinFee: solBucket.coinFee,
-            calculatedNet: solBucket.buyVolume + solBucket.rewardVolume - solBucket.sellVolume - solBucket.coinFee
-        });
+        ensure(r.asset).rewardVolume += r.volume;
     }
     
     for (const b of Object.values(bucket)) {
@@ -209,54 +190,27 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
 
     info(`[Trades] Coin summary bucket built: ${Object.keys(bucket).length} assets`);
 
-    // --- Preisabfrage (unverändert) ---
-    const assetsInBucket = Object.keys(bucket);
-    const publicPairsToFetch = assetsInBucket
-        .map(asset => getPublicTickerPair(asset))
-        .filter((p): p is string => !!p);
-
-    const publicPriceResp = await fetchPrices(publicPairsToFetch);
-    const priceResp: Record<string, { price: number; ts: string }> = {};
-    for (const publicPair in publicPriceResp) {
-        const asset = mapPublicPairToAsset(publicPair);
-        const internalPair = krakenPair(asset);
-        if (internalPair) {
-            priceResp[internalPair] = publicPriceResp[publicPair];
-        }
-    }
-
-    // --- USD-Kurs Abfrage (ROBUSTE VERSION) ---
-    const usdEurResponse = await fetchPrices([getPublicTickerPair('USD')!]);
-    
-    // Wir nehmen den ersten Wert aus der Antwort, egal wie der Schlüssel heißt.
-    const usdEurData = Object.values(usdEurResponse)[0];
-    const usdEurPrice = usdEurData?.price;
-    
-    if (!usdEurPrice) {
-        throw new Error("Konnte den USD-EUR-Wechselkurs nicht aus der Kraken-Antwort extrahieren.");
-    }
-    priceResp['USDGEUR'] = { price: usdEurPrice, ts: usdEurData.ts };
-
-    // --- Finale Berechnung (unverändert) ---
     for (const b of Object.values(bucket)) {
         let currentPrice = 0;
         let priceTimestamp = '';
-        if (b.asset === 'USDG') {
-            currentPrice = priceResp['USDGEUR']?.price ?? 1;
-            priceTimestamp = priceResp['USDGEUR']?.ts ?? '';
-        } else {
-            const internalPair = krakenPair(b.asset) ?? '';
-            currentPrice = priceResp[internalPair]?.price ?? 0;
-            priceTimestamp = priceResp[internalPair]?.ts ?? '';
+
+        const internalPair = krakenPair(b.asset) ?? '';
+        const quote = priceData[internalPair] ?? priceData[`${b.asset}EUR`];
+
+        if (quote) {
+            currentPrice += quote.price;
+            priceTimestamp = quote.ts;
+        } else if (b.asset === 'USDG') {
+            const usdQuote = priceData['EURUSD'];
+            if (usdQuote) {
+                currentPrice = usdQuote.price;
+                priceTimestamp = usdQuote.ts;
+            }
         }
+
         b.priceNow = currentPrice;
         b.priceTs = priceTimestamp ? dt(new Date(priceTimestamp).getTime() / 1000) : '';
         b.unrealised = b.netVolume * b.priceNow;
-        b.realised = -b.netSpend;
-        b.totalPL = b.realised + b.unrealised;
-    }
-
-    for (const b of Object.values(bucket)) {
         b.realised = -b.netSpend;
         b.totalPL = b.realised + b.unrealised;
 
@@ -266,7 +220,7 @@ export async function showCoinSummary(): Promise<CoinSummary[]> {
             b.totalPLPercent = null;
         }
     }
-    
+
     return Object.values(bucket).sort((a, b) => a.asset.localeCompare(b.asset));
 }
 
