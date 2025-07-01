@@ -25,7 +25,7 @@ app.get('/api/all-data', async (_req, res) => {
             fetchDepositsRaw(),
             fetchWithdrawalsRaw()
         ]);
-        info(`Fetched ${ledgers.length} ledergs, ${tradesRaw.length} trades, ${depositsRaw.length} deposits, ${withdrawalsRaw.length} withdrawals.`);
+        info(`Fetched ${ledgers.length} ledgers, ${tradesRaw.length} trades, ${depositsRaw.length} deposits, ${withdrawalsRaw.length} withdrawals.`);
 
         info('Processing raw data...');
         const deposits = processDeposits(depositsRaw);
