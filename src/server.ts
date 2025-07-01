@@ -56,31 +56,31 @@ app.get('/api/all-data', async (_req, res) => {
             priceData['USDGEUR'] = publicPrices['EURUSD'];
         }
 
-        let portofolioValue = 0;
+        let portfolioValue = 0;
         for (const [assetCode, balanceStr] of Object.entries(accountBalance)) {
             const balance = parseFloat(balanceStr);
             if (balance === 0) continue;
 
             const asset = mapKrakenAsset(assetCode);
             if (asset === 'EUR') {
-                portofolioValue += balance;
+                portfolioValue += balance;
                 continue;
             }
 
             const pair = krakenPair(asset);
             const quote = priceData[pair!];
             if (quote?.price) {
-                portofolioValue += balance * quote.price;
+                portfolioValue += balance * quote.price;
             } else {
                 info(`[Balance] No price found for asset ${asset} (code: ${assetCode}, pair: ${pair})`);
             }
         }
-        info(`[Balance] Calculated total portfolio value: €${portofolioValue.toFixed(2)}`);
+        info(`[Balance] Calculated total portfolio value: €${portfolioValue.toFixed(2)}`);
 
         const coinSummary = processCoinSummary(tradesRaw, ledgers, priceData);
 
         res.json({
-            portofolioValue,
+            portfolioValue,
             deposits,
             withdrawals,
             buys,

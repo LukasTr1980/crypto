@@ -8,6 +8,10 @@ const ALT_MAP: Record<string, string> = {
 };
 
 export function mapKrakenAsset(code: string): string {
+    if (code.toUpperCase() === 'EUR' || code.toUpperCase() ==='ZEUR') {
+        return 'EUR';
+    }
+
     code = code.split('.')[0];
     code = code.replace(/Z?EUR$/i, '');
     if (/^[XZ]/.test(code) && code.length > 3) code = code.slice(1);

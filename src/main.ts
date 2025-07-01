@@ -234,6 +234,8 @@ async function load() {
         const data: AllDataResponse = await res.json();
         info('[Main] /api/all-data OK');
 
+        renderBalance(data.portfolioValue);
+
         let html =
             renderCoinTable(data.coinSummary) +
             renderEarnTable(data.earnTransactions) +
