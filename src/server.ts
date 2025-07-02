@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fetchDepositsRaw, fetchWithdrawalsRaw, processDeposits, processWithdrawals } from './funding';
 import { processBuys, processSells, processCoinSummary } from './trade';
-import { info, error } from './utils/logger';
+import { info, error, debug } from './utils/logger';
 import { fetchAllLedgers, fetchTradesHistory, fetchPrices, fetchAccountBalance } from './utils/kraken';
 import { getEarnTransactions } from './ledger';
 import { getPublicTickerPair, mapPublicPairToAsset, krakenPair, mapKrakenAsset } from './utils/assetMapper';
@@ -42,15 +42,16 @@ app.get('/api/all-data', async (_req, res) => {
         const publicPrices = await fetchPrices(publicPairsToFetch);
 
         const priceData: Record<string, any> = {};
-        for (const [publicPair, quote] of Object.entries(publicPrices)) {
-            const asset = mapPublicPairToAsset(publicPair);
-            const internalPair = krakenPair(asset) ?? publicPair;
 
-            priceData[internalPair] = quote;
-            if (publicPair !== internalPair) {
-                priceData[publicPair] = quote;
-            }
+        for (const [krakenKey, quote] of Object.entries(publicPrices)) {
+            const asset = mapPublicPairToAsset(krakenKey);
+            const internalKey = krakenPair(asset) ?? krakenKey;
+
+            priceData[krakenKey] = quote;
+            priceData[internalKey] = quote
         }
+
+        debug('[Prices] keys:', Object.keys(priceData).join(','));
 
         let portfolioValue = 0;
         for (const [assetCode, balanceStr] of Object.entries(accountBalance)) {

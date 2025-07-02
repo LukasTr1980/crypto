@@ -26,7 +26,7 @@ export function krakenPair(asset: string): string | null {
         case 'ETC': return 'XETCEUR';
         case 'SOL': return 'SOLEUR';
         case 'PEPE': return 'PEPEEUR';
-        case 'USDG': return 'ZUSDGZEUR';
+        case 'USDG': return 'USDGZEUR';
         default: return `${asset}EUR`;
     }
 }
@@ -55,6 +55,7 @@ const PUBLIC_PAIR_TO_ASSET_MAP: Record<string, string> = {
     'PEPEEUR': 'PEPE',
     'USDGEUR': 'USDG',
     'ZUSDGZEUR': 'USDG',
+    'USDGZEUR': 'USDG',
 };
 
 export function mapPublicPairToAsset(publicPair: string): string {

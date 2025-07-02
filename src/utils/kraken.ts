@@ -4,7 +4,7 @@ import { sha256, sha512 } from '@noble/hashes/sha2';
 import { hmac } from '@noble/hashes/hmac';
 import { base64 } from '@scure/base';
 import { nextNonce } from './nonce';
-import { info, error } from './logger';
+import { info, error, debug } from './logger';
 
 info(process.env.NODE_ENV);
 
@@ -100,18 +100,32 @@ export async function fetchPrices(pairs: string[]): Promise<Record<string, Price
         params: { pair: pairs.join(',') },
     });
 
+    debug('[Ticker raw]', JSON.stringify(data.result.USDGEUR ?? data.result.USDGZEUR, null, 2));
+
     if (data.error?.length) {
         error(`[Kraken] Ticker error: ${data.error.join("; ")}`);
         throw new Error(data.error.join("; "));
     }
 
     const out: Record<string, PriceQuote> = {};
-    Object.entries(data.result).forEach(([pair, t]: any) => {
-        out[pair] = {
-            price: Number(t.c[0]),
-            ts: new Date().toISOString(),
-        };
-    });
-    info(`[Kraken] Returned ${Object.keys(out).length} pairs`);
+    for (const [pair, t] of Object.entries<any>(data.result)) {
+        let p = Number(t.c?.[0] ?? 0);
+
+        if (!p || p === 0) {
+            const ask = Number(t.a?.[0] ?? 0);
+            const bid = Number(t.b?.[0] ?? 0);
+            if (ask && bid) p = (ask + bid) / 2;
+            else if (ask) p = ask;
+            else if (bid) p = bid;
+        }
+
+        if (p > 0) {
+            out[pair] = { price: p, ts: new Date().toISOString() };
+        } else {
+            debug(`[Ticker] No usable price for ${pair} - ask=${t.a?.[0]} bid=${t.b?.[0]} last=${t.c?.[0]}`);
+        }
+    }
+
+    info(`[Kraken] Returned ${Object.keys(out).length} usable pairs`);
     return out;
 }
