@@ -45,7 +45,11 @@ app.get('/api/all-data', async (_req, res) => {
         for (const [publicPair, quote] of Object.entries(publicPrices)) {
             const asset = mapPublicPairToAsset(publicPair);
             const internalPair = krakenPair(asset) ?? publicPair;
+
             priceData[internalPair] = quote;
+            if (publicPair !== internalPair) {
+                priceData[publicPair] = quote;
+            }
         }
 
         let portfolioValue = 0;
