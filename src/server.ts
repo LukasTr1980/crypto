@@ -39,10 +39,6 @@ app.get('/api/all-data', async (_req, res) => {
             .map(asset => getPublicTickerPair(asset))
             .filter((p): p is string => !!p);
         
-        if (!publicPairsToFetch.includes('EURUSD')) {
-            publicPairsToFetch.push('EURUSD');
-        }
-
         const publicPrices = await fetchPrices(publicPairsToFetch);
 
         const priceData: Record<string, any> = {};
@@ -68,7 +64,7 @@ app.get('/api/all-data', async (_req, res) => {
             }
 
             const pair = krakenPair(asset);
-            const quote = priceData[pair!];
+            const quote = pair ? priceData[pair!] : undefined;
             if (quote?.price) {
                 portfolioValue += balance * quote.price;
             } else {
