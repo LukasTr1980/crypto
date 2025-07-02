@@ -48,10 +48,6 @@ app.get('/api/all-data', async (_req, res) => {
             priceData[internalPair] = quote;
         }
 
-        if(publicPrices['EURUSD']) {
-            priceData['USDGEUR'] = publicPrices['EURUSD'];
-        }
-
         let portfolioValue = 0;
         for (const [assetCode, balanceStr] of Object.entries(accountBalance)) {
             const balance = parseFloat(balanceStr);
@@ -63,13 +59,16 @@ app.get('/api/all-data', async (_req, res) => {
                 continue;
             }
 
-            const pair = krakenPair(asset);
-            const quote = pair ? priceData[pair!] : undefined;
-            if (quote?.price) {
-                portfolioValue += balance * quote.price;
-            } else {
-                info(`[Balance] No price found for asset ${asset} (code: ${assetCode}, pair: ${pair})`);
+            const pair = krakenPair(asset) ?? `${asset}EUR`;
+            const quote = priceData[pair];
+
+            if (!quote?.price) {
+                error(`[Balance] Missing price for ${asset} (expected pair ${pair})`);
+                continue;
             }
+
+            portfolioValue += balance * quote.price;
+
         }
         info(`[Balance] Calculated total portfolio value: €${portfolioValue.toFixed(2)}`);
 

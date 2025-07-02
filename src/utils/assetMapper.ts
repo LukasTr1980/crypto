@@ -53,7 +53,7 @@ const PUBLIC_PAIR_TO_ASSET_MAP: Record<string, string> = {
     'ETCEUR': 'ETC',
     'SOLEUR': 'SOL',
     'PEPEEUR': 'PEPE',
-    'USDEUR': 'USD',
+    'USDGEUR': 'USDG',
 };
 
 export function mapPublicPairToAsset(publicPair: string): string {
