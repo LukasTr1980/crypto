@@ -44,8 +44,6 @@ npm run dev:client   # front‑end bundler
 | `KRAKEN_API_SECRET` | matching secret |
 | *(optional)* `NODE_ENV=production` | disables debug logs |
 
-The included `load_secrets.sh` script will read those keys from Docker Swarm secrets at `/run/secrets/*`.
-
 ---
 
 ## 🛠️ Scripts
