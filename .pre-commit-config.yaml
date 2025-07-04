@@ -1,8 +1,8 @@
 repos:
-  - repo: local
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.27.2
     hooks:
       - id: gitleaks
         name: Gitleaks staged scan
         entry: gitleaks protect --staged --no-banner --redact 1>&2
-        language: system
         stages: [pre-commit, pre-push]

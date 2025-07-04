@@ -225,14 +225,14 @@ async function load() {
 
     info('[Main] Loading all page data from single endpoint');
     try {
-        const res = await fetch('/api/all-data');
+        const res = await fetch('api/all-data');
         if (!res.ok) {
             const body = await res.json().catch(() => ({ error: `Servererror: ${res.status}` }));
             throw new Error(body.error ?? `HTTP ${res.status}`);
         }
 
         const data: AllDataResponse = await res.json();
-        info('[Main] /api/all-data OK');
+        info('[Main] api/all-data OK');
 
         renderBalance(data.portfolioValue);
 
