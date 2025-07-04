@@ -1,6 +1,6 @@
 # Kraken Pro Dashboard
 
-A lightweight personal dashboard that fetches **portfolio, trades, deposits/withdrawals, rewards and live prices** from the Kraken Pro API and renders them in a responsive single‑page UI. The back‑end is written in TypeScript/Express, the front‑end is bundled with esbuild, and all code‑quality checks run automatically via **pre‑commit + Gitleaks**.
+A lightweight dashboard that fetches **portfolio, trades, deposits/withdrawals, rewards and live prices** from the Kraken Pro API and renders them in a responsive single‑page UI. The back‑end is written in TypeScript/Express, the front‑end is bundled with esbuild, and all code‑quality checks run automatically via **pre‑commit + Gitleaks**.
 
 ---
 
