@@ -222,7 +222,7 @@ function renderBalanceExTable(balanceData: Record<string, { balance: string; hol
     const header =
         '<tr><th>Asset</th>' +
         '<th class="num">Total Balance</th>' +
-        '<th calss="num">In Order</th><tr>';
+        '<th class="num">In Order</th><tr>';
 
     const aggregatedBalance: Record<string, { balance: number; hold_trade: number }> = {};
     for (const [assetCode, data] of Object.entries(balanceData)) {
@@ -239,7 +239,7 @@ function renderBalanceExTable(balanceData: Record<string, { balance: string; hol
     const body = Object.entries(aggregatedBalance)
         .sort((a, b) => a[0].localeCompare(b[0]))
         .map(([asset, data]) => {
-            if (data.balance === 0) return;
+            if (data.balance === 0 && data.hold_trade === 0) return;
             const balanceDigits = asset === 'EUR' ? 2 : 8;
 
             return row([
@@ -257,7 +257,7 @@ function renderBalanceExTable(balanceData: Record<string, { balance: string; hol
             <thead>${header}</thead>
             <tbody>${body}</tbody>
         </table>
-    <section>`
+    </section>`;
 }
 
 function renderTradeBalanceTable(tradeBalance: any) {
@@ -314,7 +314,7 @@ function renderTradesHistoryTable(tradesHistory: { trades: Record<string, any> }
     }
 
     const header =
-        '<tr><th>Time</th><th>Pair</th><th>Order Type</th>' +
+        '<tr><th>Time</th><th>Pair</th><th>Type</th><th>Order Type</th>' +
         '<th class="num">Price</th>' +
         '<th class="num">Volume</th>' +
         '<th class="num">Cost</th>' +
@@ -370,7 +370,7 @@ async function load() {
         let html =
             renderBalanceExTable(data.accountBalance) +
             renderTradeBalanceTable(data.tradeBalance) +
-            renderTradesHistoryTable(data.tradeBalance) +
+            renderTradesHistoryTable(data.tradesHistory) +
             renderCoinTable(data.coinSummary) +
             renderEarnTable(data.earnTransactions) +
             renderTradeTable(data.buys, 'Buys') +
