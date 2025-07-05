@@ -1,5 +1,5 @@
 import { info } from "./utils/logger";
-import { mapPair } from "./utils/assetMapper";
+import { mapKrakenAsset } from "./utils/assetMapper";
 
 interface BtcValueResult {
     btcBalance: number;
@@ -16,7 +16,7 @@ export function calculateBtcValue(
 
     let totalBtcBalance = 0;
     for (const [assetCode, data] of Object.entries(accountBalance)) {
-        if (mapPair(assetCode) === 'BTC') {
+        if (mapKrakenAsset(assetCode) === 'BTC') {
             totalBtcBalance += parseFloat(data.balance);
         }
     }
@@ -26,15 +26,7 @@ export function calculateBtcValue(
         return null;
     }
 
-    let btcEurTicker = null;
-    for(const [pairName, tickerData] of Object.entries(marketPrices)) {
-        if (mapPair(pairName) === 'BTC/EUR') {
-            btcEurTicker = tickerData;
-            info(`[Calcualtions] Found matching BTC/EUR ticker: ${pairName}`);
-            break;
-        }
-    }
-
+    const btcEurTicker = marketPrices['XXBTZEUR'];
     if (!btcEurTicker) {
         info('[Calculations] No BTC/EUR price ticker found in market data.');
         return null;
