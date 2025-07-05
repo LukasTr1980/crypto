@@ -162,7 +162,7 @@ function renderLedgersTable(ledgers: any[]) {
                 dt(l.time),
                 l.asset,
                 l.type,
-                l.subtybe || '-',
+                l.subtype || '-',
                 fmt(parseFloat(l.amount), isEur ? 2 : 8),
                 fmt(parseFloat(l.fee), isEur ? 2 : 8),
                 fmt(parseFloat(l.balance), isEur ? 2 : 8),
