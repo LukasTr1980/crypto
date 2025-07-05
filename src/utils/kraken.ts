@@ -89,7 +89,7 @@ export async function fetchTradesHistory(): Promise<any> {
 export async function fetchAccountBalance(): Promise<Record<string, string>> {
     info('[Kraken] Fetching account balance');
     const params = new URLSearchParams({ nonce: nextNonce() });
-    return krakenPost('/0/private/Balance', params);
+    return krakenPost('/0/private/BalanceEx', params);
 }
 
 export async function fetchPrices(pairs: string[]): Promise<Record<string, PriceQuote>> {

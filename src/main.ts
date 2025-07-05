@@ -3,9 +3,11 @@ import { TradeResult, CoinSummary } from './trade';
 import { fmt, fmtEuro } from './utils/fmt';
 import { info, error } from './utils/logger';
 import { EarnTransactions } from './ledger';
+import { mapKrakenAsset } from './utils/assetMapper';
 
 interface AllDataResponse {
     portfolioValue: number;
+    accountBalance: Record<string, { balance: string; hold_trade: string }>;
     deposits: FundingResult;
     withdrawals: FundingResult;
     buys: TradeResult;
@@ -213,6 +215,48 @@ function renderBalance (value: number) {
     `;
 }
 
+function renderBalanceExTable(balanceData: Record<string, { balance: string; hold_trade: string; }>) {
+    const header =
+        '<tr><th>Asset</th>' +
+        '<th class="num">Total Balance</th>' +
+        '<th calss="num">In Order</th><tr>';
+
+    const aggregatedBalance: Record<string, { balance: number; hold_trade: number }> = {};
+    for (const [assetCode, data] of Object.entries(balanceData)) {
+        const asset = mapKrakenAsset(assetCode);
+
+        if (!aggregatedBalance[asset]) {
+            aggregatedBalance[asset] = { balance: 0, hold_trade: 0 };
+        }
+
+        aggregatedBalance[asset].balance += parseFloat(data?.balance ?? '0');
+        aggregatedBalance[asset].balance += parseFloat(data?.hold_trade ?? '0');
+    }
+
+    const body = Object.entries(aggregatedBalance)
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([asset, data]) => {
+            if (data.balance === 0) return;
+            const balanceDigits = asset === 'EUR' ? 2 : 8;
+
+            return row([
+                asset,
+                fmt(data.balance, balanceDigits),
+                fmt(data.hold_trade, 8)
+            ], [1,2]);
+        })
+        .join('');
+
+    return `
+    <section>
+        <h2>Account Balance Details</h2>
+        <table>
+            <thead>${header}</thead>
+            <tbody>${body}</tbody>
+        </table>
+    <section>`
+}
+
 async function load() {
     const el = document.getElementById('content');
     if (!el) {
@@ -233,6 +277,7 @@ async function load() {
         renderBalance(data.portfolioValue);
 
         let html =
+            renderBalanceExTable(data.accountBalance) +
             renderCoinTable(data.coinSummary) +
             renderEarnTable(data.earnTransactions) +
             renderTradeTable(data.buys, 'Buys') +

@@ -19,6 +19,8 @@ app.get('/api/all-data', async (_req, res) => {
         const depositsRaw = await fetchDepositsRaw();
         const withdrawalsRaw = await fetchWithdrawalsRaw();
         const accountBalance = await fetchAccountBalance();
+
+        debug('[BalanceEx Raw]', JSON.stringify(accountBalance, null, 2));
         
         info(`Fetched ${ledgers.length} ledgers, ${tradesRaw.length} trades, ${depositsRaw.length} deposits, ${withdrawalsRaw.length} withdrawals.`);
 
@@ -54,9 +56,9 @@ app.get('/api/all-data', async (_req, res) => {
         debug('[Prices] keys:', Object.keys(priceData).join(','));
 
         let portfolioValue = 0;
-        for (const [assetCode, balanceStr] of Object.entries(accountBalance)) {
-            const balance = parseFloat(balanceStr);
-            if (balance === 0) continue;
+        for (const [assetCode, balanceData] of Object.entries(accountBalance as Record<string, any>)) {
+            const balance = parseFloat(balanceData.balance);
+            if (isNaN(balance) || balance === 0) continue;
 
             const asset = mapKrakenAsset(assetCode);
             if (asset === 'EUR') {
@@ -81,6 +83,7 @@ app.get('/api/all-data', async (_req, res) => {
 
         res.json({
             portfolioValue,
+            accountBalance,
             deposits,
             withdrawals,
             buys,
