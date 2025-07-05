@@ -4,7 +4,6 @@ import { mapKrakenAsset } from './utils/assetMapper';
 import { dt } from './utils/dt';
 
 interface AllDataResponse {
-    portfolioValue: number;
     accountBalance: Record<string, { balance: string; hold_trade: string }>;
     tradeBalance: any;
     tradesHistory: { trades: Record<string, any> };
@@ -15,18 +14,6 @@ function row(cells: (string | number)[], numIdx: number[] = []) {
     return `<tr>${cells
         .map((c, i) => `<td${numIdx.includes(i) ? ' class="num"' : ''}>${c}</td>`)
         .join('')}</tr>`;
-}
-
-function renderBalance(value: number) {
-    const el = document.getElementById('portfolio-balance');
-    if (!el) {
-        return;
-    }
-
-    el.innerHTML = `
-    <span>Current Balance</span>
-    <div>${fmtEuro(value, 2)}</div>
-    `;
 }
 
 function renderBalanceExTable(balanceData: Record<string, { balance: string; hold_trade: string; }>) {
@@ -63,7 +50,7 @@ function renderBalanceExTable(balanceData: Record<string, { balance: string; hol
 
     return `
     <section>
-        <h2>Account Balance Details</h2>
+        <h2>Raw Account Balance Details</h2>
         <table>
             <thead>${header}</thead>
             <tbody>${body}</tbody>
@@ -75,8 +62,8 @@ function renderTradeBalanceTable(tradeBalance: any) {
     if (!tradeBalance || Object.keys(tradeBalance).length === 0) {
         return `
         <section>
-            <h2>Trade Balance</h2>
-            <p>No Trade Balance available. Normal for accounts with no Margin-Trades.</p>
+            <h2>Raw Trade Balance</h2>
+            <p>No Raw Trade Balance available. Normal for accounts with no Margin-Trades.</p>
         </section>`;
     }
 
@@ -107,7 +94,7 @@ function renderTradeBalanceTable(tradeBalance: any) {
 
     return `
     <section>
-        <h2>Trade Balance</h2>
+        <h2>Raw Trade Balance</h2>
         <table>
             <thead>${header}</head>
             <tbody>${body}</tbody>
@@ -218,8 +205,6 @@ async function load() {
 
         const data: AllDataResponse = await res.json();
         info('[Main] api/all-data OK');
-
-        renderBalance(data.portfolioValue);
 
         let html =
             renderBalanceExTable(data.accountBalance) +
