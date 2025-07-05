@@ -1,6 +1,5 @@
 import { fmt, fmtEuro } from './utils/fmt';
 import { info, error } from './utils/logger';
-import { mapKrakenAsset } from './utils/assetMapper';
 import { dt } from './utils/dt';
 
 interface AllDataResponse {
@@ -22,28 +21,18 @@ function renderBalanceExTable(balanceData: Record<string, { balance: string; hol
         '<th class="num">Total Balance</th>' +
         '<th class="num">In Order</th><tr>';
 
-    const aggregatedBalance: Record<string, { balance: number; hold_trade: number }> = {};
-    for (const [assetCode, data] of Object.entries(balanceData)) {
-        const asset = mapKrakenAsset(assetCode);
-
-        if (!aggregatedBalance[asset]) {
-            aggregatedBalance[asset] = { balance: 0, hold_trade: 0 };
-        }
-
-        aggregatedBalance[asset].balance += parseFloat(data?.balance ?? '0');
-        aggregatedBalance[asset].hold_trade += parseFloat(data?.hold_trade ?? '0');
-    }
-
-    const body = Object.entries(aggregatedBalance)
+    const body = Object.entries(balanceData)
         .sort((a, b) => a[0].localeCompare(b[0]))
-        .map(([asset, data]) => {
-            if (data.balance === 0 && data.hold_trade === 0) return;
-            const balanceDigits = asset === 'EUR' ? 2 : 8;
+        .map(([assetCode, data]) => {
+            const balance = parseFloat(data?.balance ?? '0');
+            const hold_trade = parseFloat(data?.hold_trade ?? '0');
+
+            if (balance === 0 && hold_trade === 0) return '';
 
             return row([
-                asset,
-                fmt(data.balance, balanceDigits),
-                fmt(data.hold_trade, 8)
+                assetCode,
+                fmt(balance, 8),
+                fmt(hold_trade, 8)
             ], [1, 2]);
         })
         .join('');
@@ -165,15 +154,14 @@ function renderLedgersTable(ledgers: any[]) {
     const body = ledgers
         .sort((a, b) => b.time - a.time)
         .map(l => {
-            const isEur = mapKrakenAsset(l.asset) === 'EUR';
             return row([
                 dt(l.time),
                 l.asset,
                 l.type,
                 l.subtybe || '-',
-                fmt(parseFloat(l.amount), isEur ? 2 : 8),
-                fmt(parseFloat(l.fee), isEur ? 2 : 8),
-                fmt(parseFloat(l.balance), isEur ? 2 : 8),
+                fmt(parseFloat(l.amount), 8),
+                fmt(parseFloat(l.fee), 8),
+                fmt(parseFloat(l.balance), 8),
                 l.refid,
             ], [4, 5, 6]);
         })

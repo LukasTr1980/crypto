@@ -2,7 +2,6 @@ import express from 'express';
 import path from 'path';
 import { info, error, debug } from './utils/logger';
 import { fetchAllLedgers, fetchTradesHistory, fetchAccountBalance, fetchTradeBalance } from './utils/kraken';
-import { getPublicTickerPair, mapPublicPairToAsset, krakenPair, mapKrakenAsset } from './utils/assetMapper';
 
 const app = express();
 const port = process.env.PORT ?? 3000;
@@ -12,13 +11,12 @@ app.get('/api/all-data', async (_req, res) => {
     try {
         const ledgers = await fetchAllLedgers();
         const tradesHistory = await fetchTradesHistory();
-        const tradesRaw = Object.values(tradesHistory.trades ?? {});
         const accountBalance = await fetchAccountBalance();
         const tradeBalance = await fetchTradeBalance();
 
+        const tradesCount = Object.keys(tradesHistory.tradesCount ?? {}).length;
+        info(`[Fetched] ${ledgers.length} ledgers, ${tradesCount} trades.`);
         debug('[Ledgers Raw]', JSON.stringify(ledgers.slice(0, 5), null, 2));
-        
-        info(`Fetched ${ledgers.length} ledgers, ${tradesRaw.length} trades.`);
 
         res.json({
             accountBalance,
