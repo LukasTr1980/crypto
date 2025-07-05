@@ -4,11 +4,13 @@ import { fmt, fmtEuro } from './utils/fmt';
 import { info, error } from './utils/logger';
 import { EarnTransactions } from './ledger';
 import { mapKrakenAsset } from './utils/assetMapper';
+import { dt } from './utils/dt';
 
 interface AllDataResponse {
     portfolioValue: number;
     accountBalance: Record<string, { balance: string; hold_trade: string }>;
     tradeBalance: any;
+    tradesHistory: { trades: Record<string, any> };
     deposits: FundingResult;
     withdrawals: FundingResult;
     buys: TradeResult;
@@ -179,8 +181,8 @@ function renderEarnTable(items: EarnTransactions[]) {
         '<th>Ref ID</th></tr>';
 
     const body = items
-        .map(i => 
-            row (
+        .map(i =>
+            row(
                 [
                     i.time,
                     i.asset,
@@ -194,7 +196,7 @@ function renderEarnTable(items: EarnTransactions[]) {
         )
         .join('');
 
-        return `
+    return `
         <section>
             <h2>Earn Transactions</h2>
             <table>
@@ -204,7 +206,7 @@ function renderEarnTable(items: EarnTransactions[]) {
         </section>`;
 }
 
-function renderBalance (value: number) {
+function renderBalance(value: number) {
     const el = document.getElementById('portfolio-balance');
     if (!el) {
         return;
@@ -231,7 +233,7 @@ function renderBalanceExTable(balanceData: Record<string, { balance: string; hol
         }
 
         aggregatedBalance[asset].balance += parseFloat(data?.balance ?? '0');
-        aggregatedBalance[asset].balance += parseFloat(data?.hold_trade ?? '0');
+        aggregatedBalance[asset].hold_trade += parseFloat(data?.hold_trade ?? '0');
     }
 
     const body = Object.entries(aggregatedBalance)
@@ -244,7 +246,7 @@ function renderBalanceExTable(balanceData: Record<string, { balance: string; hol
                 asset,
                 fmt(data.balance, balanceDigits),
                 fmt(data.hold_trade, 8)
-            ], [1,2]);
+            ], [1, 2]);
         })
         .join('');
 
@@ -302,6 +304,50 @@ function renderTradeBalanceTable(tradeBalance: any) {
     </section>`
 }
 
+function renderTradesHistoryTable(tradesHistory: { trades: Record<string, any> }) {
+    if (!tradesHistory || !tradesHistory.trades || Object.keys(tradesHistory.trades).length === 0) {
+        return `
+        <section>
+            <h2>Raw Trade History</h2>
+            <p>No raw Trades-Data found.</p>
+        </section>`;
+    }
+
+    const header =
+        '<tr><th>Time</th><th>Pair</th><th>Order Type</th>' +
+        '<th class="num">Price</th>' +
+        '<th class="num">Volume</th>' +
+        '<th class="num">Cost</th>' +
+        '<th class="num">Fee</th>' +
+        '<th>Order ID</th></tr>';
+
+    const trades = Object.values(tradesHistory.trades)
+        .sort((a, b) => b.time - a.time);
+
+    const body = trades.map(t =>
+        row([
+            dt(t.time),
+            t.pair,
+            t.type.toUpperCase(),
+            t.ordertype,
+            fmtEuro(parseFloat(t.price), 4),
+            fmt(parseFloat(t.vol), 8),
+            fmtEuro(parseFloat(t.cost), 2),
+            fmtEuro(parseFloat(t.fee), 4),
+            t.ordertxid,
+        ], [4, 5, 6, 7])
+    ).join('');
+
+    return `
+    <section>
+        <h2>Raw Trade History</h2>
+        <table>
+            <thead>${header}</thead>
+            <tbody>${body}</tbody>
+        </table>
+    </section>`;
+}
+
 async function load() {
     const el = document.getElementById('content');
     if (!el) {
@@ -324,6 +370,7 @@ async function load() {
         let html =
             renderBalanceExTable(data.accountBalance) +
             renderTradeBalanceTable(data.tradeBalance) +
+            renderTradesHistoryTable(data.tradeBalance) +
             renderCoinTable(data.coinSummary) +
             renderEarnTable(data.earnTransactions) +
             renderTradeTable(data.buys, 'Buys') +

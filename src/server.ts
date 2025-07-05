@@ -19,7 +19,7 @@ app.get('/api/all-data', async (_req, res) => {
         const depositsRaw = await fetchDepositsRaw();
         const withdrawalsRaw = await fetchWithdrawalsRaw();
         const accountBalance = await fetchAccountBalance();
-        const TradeBalance = await fetchTradeBalance();
+        const tradeBalance = await fetchTradeBalance();
 
         debug('[BalanceEx Raw]', JSON.stringify(accountBalance, null, 2));
         
@@ -85,7 +85,8 @@ app.get('/api/all-data', async (_req, res) => {
         res.json({
             portfolioValue,
             accountBalance,
-            TradeBalance,
+            tradeBalance,
+            tradesHistory,
             deposits,
             withdrawals,
             buys,
