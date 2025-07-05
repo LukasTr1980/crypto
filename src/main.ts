@@ -10,6 +10,7 @@ interface AllDataResponse {
     accountBalance: Record<string, { balance: string; hold_trade: string }>;
     tradeBalance: any;
     tradesHistory: { trades: Record<string, any> };
+    ledgers: any[];
     deposits: FundingResult;
     withdrawals: FundingResult;
     earnTransactions: EarnTransactions[];
@@ -233,6 +234,49 @@ function renderTradesHistoryTable(tradesHistory: { trades: Record<string, any> }
     </section>`;
 }
 
+function renderLedgersTable(ledgers: any[]) {
+    if (!ledgers || ledgers.length === 0) {
+        return `
+        <section>
+            <h2>Raw Ledger</h2>
+            <p>No Ledger-Data found.</p>
+        </section>`
+    }
+
+    const header =
+        '<tr><th>Time</th><th>Asset</th><th>Type</th><th>Subtype</th>' +
+        '<th class="num">Amount</th>' +
+        '<th class="num">Fee</th>' +
+        '<th class="num">Balance</th>' +
+        '<th>Ref ID</th></tr>';
+
+    const body = ledgers
+        .sort((a, b) => b.time - a.time)
+        .map(l => {
+            const isEur = mapKrakenAsset(l.asset) === 'EUR';
+            return row([
+                dt(l.time),
+                l.asset,
+                l.type,
+                l.subtybe || '-',
+                fmt(parseFloat(l.amount), isEur ? 2 : 8),
+                fmt(parseFloat(l.fee), isEur ? 2 : 8),
+                fmt(parseFloat(l.balance), isEur ? 2 : 8),
+                l.refid,
+            ], [4, 5, 6]);
+        })
+        .join('');
+
+    return `
+    <section>
+        <h2>Raw Ledger</h2>
+        <table>
+            <thead>${header}</thead>
+            <tbody>${body}</tbody>
+        </table>
+    </section>`;
+}
+
 async function load() {
     const el = document.getElementById('content');
     if (!el) {
@@ -256,6 +300,7 @@ async function load() {
             renderBalanceExTable(data.accountBalance) +
             renderTradeBalanceTable(data.tradeBalance) +
             renderTradesHistoryTable(data.tradesHistory) +
+            renderLedgersTable(data.ledgers) +
             renderEarnTable(data.earnTransactions) +
             renderFundingTable(data.deposits, 'Deposits') +
             renderFundingTable(data.withdrawals, 'Withdrawals');
