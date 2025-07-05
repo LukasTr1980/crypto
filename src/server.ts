@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { info, error, debug } from './utils/logger';
-import { fetchAllLedgers, fetchTradesHistory, fetchAccountBalance, fetchTradeBalance } from './utils/kraken';
+import { fetchAllLedgers, fetchAllTradesHistory, fetchAccountBalance, fetchTradeBalance } from './utils/kraken';
 
 const app = express();
 const port = process.env.PORT ?? 3000;
@@ -10,7 +10,7 @@ app.get('/api/all-data', async (_req, res) => {
     info('GET /api/all-data - Starting data aggregation');
     try {
         const ledgers = await fetchAllLedgers();
-        const tradesHistory = await fetchTradesHistory();
+        const tradesHistory = await fetchAllTradesHistory();
         const accountBalance = await fetchAccountBalance();
         const tradeBalance = await fetchTradeBalance();
 

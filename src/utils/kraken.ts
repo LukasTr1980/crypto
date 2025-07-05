@@ -73,7 +73,9 @@ export async function fetchAllLedgers(): Promise<any[]> {
         }
 
         offset += ledgerPage.length;
-        info(`[Kraken] Fetched ${allLedgers.length} of ${totalCount} ledger entries...`);
+        if (totalCount > 0) {
+            info(`[Kraken] Fetched ${allLedgers.length} of ${totalCount} ledger entries...`);
+        }
 
     } while (offset < totalCount && ledgerPage.length > 0);
 
@@ -81,9 +83,37 @@ export async function fetchAllLedgers(): Promise<any[]> {
     return allLedgers;
 }
 
-export async function fetchTradesHistory(): Promise<any> {
-    const params = new URLSearchParams({ nonce: nextNonce() });
-    return krakenPost('/0/private/TradesHistory', params);
+export async function fetchAllTradesHistory(): Promise<any> {
+    info('[Kraken] Fetching all trades history with pagination...');
+    let offset = 0;
+    let allTrades: any[] = [];
+    let totalCount = 0;
+    
+    do {
+        const params = new URLSearchParams({ nonce: nextNonce(), ofs: offset.toString() });
+        const result = await krakenPost('/0/private/TradesHistory', params);
+        const tradesPage = Object.values(result.trades ?? {});
+
+        allTrades = allTrades.concat(tradesPage);
+
+        if (totalCount === 0) {
+            totalCount = Number(result.count);
+        }
+
+        offset += tradesPage.length;
+        if (totalCount > 0) {
+            info(`[Kraken] Fetched ${allTrades.length} of ${totalCount} trades...`);
+        }
+    } while (offset < totalCount);
+
+    info(`[Kraken] Finished fetching. Total trades: ${allTrades.length}`);
+
+    const tradesAsObject = allTrades.reduce((obj, trade) => {
+        obj[trade.ordertxid + trade.postxid] = trade;
+        return obj;
+    }, {});
+
+    return { trades: tradesAsObject, count: allTrades.length };
 }
 
 export async function fetchAccountBalance(): Promise<Record<string, string>> {
