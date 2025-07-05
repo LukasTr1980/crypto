@@ -29,9 +29,12 @@ function renderBalanceExTable(balanceData: Record<string, { balance: string; hol
 
             if (balance === 0 && hold_trade === 0) return '';
 
+            const isEur = assetCode.toUpperCase().includes('EUR');
+            const balanceDigits = isEur ? 2 : 8;
+
             return row([
                 assetCode,
-                fmt(balance, 8),
+                fmt(balance, balanceDigits),
                 fmt(hold_trade, 8)
             ], [1, 2]);
         })
@@ -154,14 +157,15 @@ function renderLedgersTable(ledgers: any[]) {
     const body = ledgers
         .sort((a, b) => b.time - a.time)
         .map(l => {
+            const isEur = l.asset.toUpperCase().includes('EUR');
             return row([
                 dt(l.time),
                 l.asset,
                 l.type,
                 l.subtybe || '-',
-                fmt(parseFloat(l.amount), 8),
-                fmt(parseFloat(l.fee), 8),
-                fmt(parseFloat(l.balance), 8),
+                fmt(parseFloat(l.amount), isEur ? 2 : 8),
+                fmt(parseFloat(l.fee), isEur ? 2 : 8),
+                fmt(parseFloat(l.balance), isEur ? 2 : 8),
                 l.refid,
             ], [4, 5, 6]);
         })
