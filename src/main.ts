@@ -1,7 +1,6 @@
 import { FundingResult } from './funding';
 import { fmt, fmtEuro } from './utils/fmt';
 import { info, error } from './utils/logger';
-import { EarnTransactions } from './ledger';
 import { mapKrakenAsset } from './utils/assetMapper';
 import { dt } from './utils/dt';
 
@@ -13,7 +12,6 @@ interface AllDataResponse {
     ledgers: any[];
     deposits: FundingResult;
     withdrawals: FundingResult;
-    earnTransactions: EarnTransactions[];
 }
 
 function row(cells: (string | number)[], numIdx: number[] = []) {
@@ -56,40 +54,6 @@ function renderFundingTable(result: FundingResult, caption: string) {
             <tfoot>${summary}</tfoot>
         </table>
     </section>`;
-}
-
-
-function renderEarnTable(items: EarnTransactions[]) {
-    const header =
-        '<tr><th>Datum</th><th>Asset</th><th>Typ</th>' +
-        '<th class="num">Betrag</th>' +
-        '<th class="num">Gebühr</th>' +
-        '<th>Ref ID</th></tr>';
-
-    const body = items
-        .map(i =>
-            row(
-                [
-                    i.time,
-                    i.asset,
-                    i.type,
-                    fmt(i.amount, 8),
-                    fmt(i.fee, 8),
-                    i.refid,
-                ],
-                [3, 4]
-            )
-        )
-        .join('');
-
-    return `
-        <section>
-            <h2>Earn Transactions</h2>
-            <table>
-                <thead>${header}</thead>
-                <tbody>${body}</tbody>
-            </table>
-        </section>`;
 }
 
 function renderBalance(value: number) {
@@ -301,7 +265,6 @@ async function load() {
             renderTradeBalanceTable(data.tradeBalance) +
             renderTradesHistoryTable(data.tradesHistory) +
             renderLedgersTable(data.ledgers) +
-            renderEarnTable(data.earnTransactions) +
             renderFundingTable(data.deposits, 'Deposits') +
             renderFundingTable(data.withdrawals, 'Withdrawals');
 

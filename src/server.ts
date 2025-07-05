@@ -3,7 +3,6 @@ import path from 'path';
 import { fetchDepositsRaw, fetchWithdrawalsRaw, processDeposits, processWithdrawals } from './funding';
 import { info, error, debug } from './utils/logger';
 import { fetchAllLedgers, fetchTradesHistory, fetchPrices, fetchAccountBalance, fetchTradeBalance } from './utils/kraken';
-import { getEarnTransactions } from './ledger';
 import { getPublicTickerPair, mapPublicPairToAsset, krakenPair, mapKrakenAsset } from './utils/assetMapper';
 
 const app = express();
@@ -26,10 +25,8 @@ app.get('/api/all-data', async (_req, res) => {
 
         const deposits = processDeposits(depositsRaw);
         const withdrawals = processWithdrawals(withdrawalsRaw);
-        const earnTransactions = getEarnTransactions(ledgers);
 
         const allTradesAssets = new Set([
-            ...earnTransactions.map(t => t.asset),
             ...Object.keys(accountBalance).map(mapKrakenAsset),
         ]);
 
@@ -83,7 +80,6 @@ app.get('/api/all-data', async (_req, res) => {
             ledgers,
             deposits,
             withdrawals,
-            earnTransactions
         });
         info('[All-Data API] Success');
 
