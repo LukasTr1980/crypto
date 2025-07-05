@@ -7,12 +7,28 @@ interface AllDataResponse {
     tradeBalance: any;
     tradesHistory: { trades: Record<string, any> };
     ledgers: any[];
+    btcValue: { btcBalance: number; eurValue: number; btcPrice: number; } | null;
 }
 
 function row(cells: (string | number)[], numIdx: number[] = []) {
     return `<tr>${cells
         .map((c, i) => `<td${numIdx.includes(i) ? ' class="num"' : ''}>${c}</td>`)
         .join('')}</tr>`;
+}
+
+function renderBtcValueTable(btcValue: { btcBalance: number; eurValue: number; btcPrice: number } | null) {
+    if (!btcValue) {
+        return '<section><h2>Calculated BTC Value</h2><p>No BTC balance found to calculate value.</p></section>';
+    }
+
+    const header = '<tr><th>Description</th><th class="num">Value</th></tr>';
+    const body = [
+        row(['BTC Balance', fmt(btcValue.btcBalance, 8)], [1]),
+        row(['Current BTC Price', fmt(btcValue.btcPrice, 2)], [1]),
+        row(['Value in EUR', fmt(btcValue.eurValue, 2)], [1]),
+    ].join('');
+
+    return `<section><h2>Calculated BTC Value</h2><table><thead>${header}</thead><tbody>${body}</body></table></section>`;
 }
 
 function renderBalanceExTable(balanceData: Record<string, { balance: string; hold_trade: string; }>) {
@@ -199,6 +215,7 @@ async function load() {
         info('[Main] api/all-data OK');
 
         let html =
+            renderBtcValueTable(data.btcValue) +
             renderBalanceExTable(data.accountBalance) +
             renderTradeBalanceTable(data.tradeBalance) +
             renderTradesHistoryTable(data.tradesHistory) +

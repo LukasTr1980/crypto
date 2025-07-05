@@ -114,7 +114,7 @@ export async function fetchAllTradesHistory(): Promise<any> {
     return { trades: tradesAsObject, count: allTrades.length };
 }
 
-export async function fetchAccountBalance(): Promise<Record<string, string>> {
+export async function fetchAccountBalance(): Promise<Record<string, { balance: string; hold_trade: string; }>> {
     info('[Kraken] Fetching account balance');
     const params = new URLSearchParams({ nonce: nextNonce() });
     return krakenPost('/0/private/BalanceEx', params);
@@ -124,4 +124,17 @@ export async function fetchTradeBalance(): Promise<any> {
     info('[Kraken] Fetching Trade Balance');
     const params = new URLSearchParams({ nonce: nextNonce() });
     return krakenPost('/0/private/TradeBalance', params);
+}
+
+export async function fetchPrices(): Promise<any> {
+    info('[Kraken] GET /public/Ticker (all pairs)');
+    const { data } = await axios.get(`${API_URL}/0/public/Ticker`);
+
+    if (data.error?.length) {
+        error(`[Kraken] Ticker error: ${data.error.join("; ")}`);
+        throw new Error(data.error.join("; "));
+    }
+
+    info(`[Kraken] Returned ${Object.keys(data.result).length} total price tickers.`);
+    return data.result;
 }
