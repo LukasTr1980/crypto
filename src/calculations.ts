@@ -33,7 +33,7 @@ export function calculateBtcValue(
     }
 
     const btcPriceInEur = parseFloat(btcEurTicker.c[0]);
-    const eurValue = totalBtcBalance * btcEurTicker;
+    const eurValue = totalBtcBalance * btcPriceInEur;
 
     info(`[Calculations] BTC Balance: ${totalBtcBalance}, Price: ${btcPriceInEur}, Calculated EUR Value: ${eurValue}`);
 

@@ -1,4 +1,6 @@
 const ALT_MAP: Record<string, string> = {
+    'XXBT' : 'BTC',
+    'XBT' : 'BTC',
     'XXBTZEUR': 'BTC/EUR',
     'XBTEUR': 'BTC/EUR',
 };

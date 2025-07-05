@@ -15,7 +15,7 @@ app.get('/api/all-data', async (_req, res) => {
         const accountBalance = await fetchAccountBalance();
         const tradeBalance = await fetchTradeBalance();
 
-        const marketPrices = fetchPrices();
+        const marketPrices = await fetchPrices();
 
         const btcValue = calculateBtcValue(accountBalance, marketPrices);
 
