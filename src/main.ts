@@ -1,5 +1,5 @@
 import { FundingResult } from './funding';
-import { TradeResult, CoinSummary } from './trade';
+import { TradeResult } from './trade';
 import { fmt, fmtEuro } from './utils/fmt';
 import { info, error } from './utils/logger';
 import { EarnTransactions } from './ledger';
@@ -15,7 +15,6 @@ interface AllDataResponse {
     withdrawals: FundingResult;
     buys: TradeResult;
     sells: TradeResult;
-    coinSummary: CoinSummary[];
     earnTransactions: EarnTransactions[];
 }
 
@@ -107,70 +106,6 @@ function renderTradeTable(result: TradeResult, caption: string) {
             <tbody>${body}</tbody>
         </table>
     </section>`;
-}
-
-function renderCoinTable(list: CoinSummary[]) {
-    const header =
-        '<tr><th>Coin</th>' +
-        '<th class="num">Buy €</th>' +
-        '<th class="num">Buy (Coin)</th>' +
-        '<th class="num">Ø Buy €/Coin</th>' +
-        '<th class="num">Sell €</th>' +
-        '<th class="num">Sell (Coin)</th>' +
-        '<th class="num">Ø Sell €/Coin</th>' +
-        '<th class="num">Fees €</th>' +
-        '<th class="num">Fees (Coin)</th>' +
-        '<th class="num">Realised €</th>' +
-        '<th class="num">Unrealised €</th>' +
-        '<th class="num">Total P/L €</th>' +
-        '<th class="num">Total P/L %</th>' +
-        '<th class="num">Reward (Coin)</th>' +
-        '<th class="num">Price</th>' +
-        '<th class="num">Quote TS</th></tr>';
-
-    const body = list.map(c => {
-        const formatPl = (pl: number): string => {
-            const formattedPl = fmtEuro(pl, 2);
-            if (pl > 0) {
-                return `<span class="gain">${formattedPl}</span>`;
-            }
-            if (pl < 0) {
-                return `<span class="loss">${formattedPl}</span>`
-            }
-            return formattedPl;
-        };
-
-        const formatPlPercent = (plPercent: number | null): string => {
-            if (plPercent === null) {
-                return '-';
-            }
-            const formattedPercent = `${fmt(plPercent, 2)}%`;
-            if (plPercent > 0) return `<span class="gain">${formattedPercent}</span>`;
-            if (plPercent < 0) return `<span class="loss">${formattedPercent}</span>`;
-            return formattedPercent;
-        }
-
-        return row([
-            c.asset,
-            fmtEuro(c.buyCost, 2),
-            fmt(c.buyVolume, 8),
-            c.avgBuyPrice ? fmt(c.avgBuyPrice, 2) : '-',
-            fmtEuro(c.sellProceeds, 2),
-            fmt(c.sellVolume, 8),
-            c.avgSellPrice ? fmt(c.avgSellPrice, 2) : '-',
-            fmtEuro(c.feeTotal, 2),
-            fmt(c.coinFee, 8),
-            fmtEuro(c.realised, 2),
-            fmtEuro(c.unrealised, 2),
-            formatPl(c.totalPL),
-            formatPlPercent(c.totalPLPercent),
-            fmt(c.rewardVolume, 8),
-            fmtEuro(c.priceNow, 2),
-            c.priceTs || '-',
-        ], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
-    }).join('');
-
-    return `<section><h2>Per-Coin Totals</h2><table><thead>${header}</thead><tbody>${body}</tbody></table></section>`;
 }
 
 function renderEarnTable(items: EarnTransactions[]) {
@@ -371,7 +306,6 @@ async function load() {
             renderBalanceExTable(data.accountBalance) +
             renderTradeBalanceTable(data.tradeBalance) +
             renderTradesHistoryTable(data.tradesHistory) +
-            renderCoinTable(data.coinSummary) +
             renderEarnTable(data.earnTransactions) +
             renderTradeTable(data.buys, 'Buys') +
             renderTradeTable(data.sells, 'Sells') +

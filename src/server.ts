@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { fetchDepositsRaw, fetchWithdrawalsRaw, processDeposits, processWithdrawals } from './funding';
-import { processBuys, processSells, processCoinSummary } from './trade';
+import { processBuys, processSells } from './trade';
 import { info, error, debug } from './utils/logger';
 import { fetchAllLedgers, fetchTradesHistory, fetchPrices, fetchAccountBalance, fetchTradeBalance } from './utils/kraken';
 import { getEarnTransactions } from './ledger';
@@ -80,8 +80,6 @@ app.get('/api/all-data', async (_req, res) => {
         }
         info(`[Balance] Calculated total portfolio value: €${portfolioValue.toFixed(2)}`);
 
-        const coinSummary = processCoinSummary(tradesRaw, ledgers, priceData);
-
         res.json({
             portfolioValue,
             accountBalance,
@@ -91,7 +89,6 @@ app.get('/api/all-data', async (_req, res) => {
             withdrawals,
             buys,
             sells,
-            coinSummary,
             earnTransactions
         });
         info('[All-Data API] Success');
