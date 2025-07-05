@@ -64,7 +64,7 @@ export function getBaseFees(ledgerRows: any[]): BaseFee[] {
     info('[Ledger] getBaseFees start');
     return ledgerRows
         .filter((r: any) => 
-            r.type === 'trade' &&
+            ['trade', 'reward', 'staking'].includes(r.type) &&
             r.fee && Number(r.fee) > 0 &&
             r.asset !== 'EUR' && r.asset !== 'ZEUR'
         )

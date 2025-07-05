@@ -113,8 +113,6 @@ function renderCoinTable(list: CoinSummary[]) {
         '<th class="num">Sell €</th>' +
         '<th class="num">Sell (Coin)</th>' +
         '<th class="num">Ø Sell €/Coin</th>' +
-        '<th class="num">Net (Coin)</th>' +
-        '<th class="num">Net €</th>' +
         '<th class="num">Fees €</th>' +
         '<th class="num">Fees (Coin)</th>' +
         '<th class="num">Realised €</th>' +
@@ -155,8 +153,6 @@ function renderCoinTable(list: CoinSummary[]) {
             fmtEuro(c.sellProceeds, 2),
             fmt(c.sellVolume, 8),
             c.avgSellPrice ? fmt(c.avgSellPrice, 2) : '-',
-            fmt(c.netVolume, 8),
-            fmtEuro(c.netSpend, 2),
             fmtEuro(c.feeTotal, 2),
             fmt(c.coinFee, 8),
             fmtEuro(c.realised, 2),
@@ -166,7 +162,7 @@ function renderCoinTable(list: CoinSummary[]) {
             fmt(c.rewardVolume, 8),
             fmtEuro(c.priceNow, 2),
             c.priceTs || '-',
-        ], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]);
+        ], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
     }).join('');
 
     return `<section><h2>Per-Coin Totals</h2><table><thead>${header}</thead><tbody>${body}</tbody></table></section>`;
