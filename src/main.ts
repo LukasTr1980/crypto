@@ -8,6 +8,7 @@ import { mapKrakenAsset } from './utils/assetMapper';
 interface AllDataResponse {
     portfolioValue: number;
     accountBalance: Record<string, { balance: string; hold_trade: string }>;
+    tradeBalance: any;
     deposits: FundingResult;
     withdrawals: FundingResult;
     buys: TradeResult;
@@ -257,6 +258,50 @@ function renderBalanceExTable(balanceData: Record<string, { balance: string; hol
     <section>`
 }
 
+function renderTradeBalanceTable(tradeBalance: any) {
+    if (!tradeBalance || Object.keys(tradeBalance).length === 0) {
+        return `
+        <section>
+            <h2>Trade Balance</h2>
+            <p>No Trade Balance available. Normal for accounts with no Margin-Trades.</p>
+        </section>`;
+    }
+
+    const header = '<tr><th colspan="2">Trade Balance Summary</th></tr>';
+
+    const rowsMap = [
+        { key: 'eb', label: 'Equivalent Balance (Equity)' },
+        { key: 'tb', label: 'Trade Balance (Collateral)' },
+        { key: 'm', label: 'Margin Used' },
+        { key: 'n', label: 'Unrealized P/L' },
+        { key: 'c', label: 'Cost Basis of Positions' },
+        { key: 'v', label: 'Floating Valuation of Positions' },
+        { key: 'e', label: 'Equity' },
+        { key: 'mf', label: 'Free Margin' },
+        { key: 'ml', label: 'Margin Level' },
+    ];
+
+    const body = rowsMap.map(item => {
+        const value = tradeBalance[item.key];
+        if (value === undefined) return '';
+
+        const formattedValue = item.key === 'ml'
+            ? `${fmt(parseFloat(value), 2)} %`
+            : fmtEuro(parseFloat(value));
+
+        return row([item.label, formattedValue], [1]);
+    }).join('');
+
+    return `
+    <section>
+        <h2>Trade Balance</h2>
+        <table>
+            <thead>${header}</head>
+            <tbody>${body}</tbody>
+        </table>
+    </section>`
+}
+
 async function load() {
     const el = document.getElementById('content');
     if (!el) {
@@ -278,6 +323,7 @@ async function load() {
 
         let html =
             renderBalanceExTable(data.accountBalance) +
+            renderTradeBalanceTable(data.tradeBalance) +
             renderCoinTable(data.coinSummary) +
             renderEarnTable(data.earnTransactions) +
             renderTradeTable(data.buys, 'Buys') +

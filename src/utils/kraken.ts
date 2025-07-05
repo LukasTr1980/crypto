@@ -92,6 +92,12 @@ export async function fetchAccountBalance(): Promise<Record<string, string>> {
     return krakenPost('/0/private/BalanceEx', params);
 }
 
+export async function fetchTradeBalance(): Promise<any> {
+    info('[Kraken] Fetching Trade Balance');
+    const params = new URLSearchParams({ nonce: nextNonce() });
+    return krakenPost('/0/private/TradeBalance', params);
+}
+
 export async function fetchPrices(pairs: string[]): Promise<Record<string, PriceQuote>> {
     if (!pairs.length) return {};
 

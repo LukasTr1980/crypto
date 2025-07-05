@@ -3,7 +3,7 @@ import path from 'path';
 import { fetchDepositsRaw, fetchWithdrawalsRaw, processDeposits, processWithdrawals } from './funding';
 import { processBuys, processSells, processCoinSummary } from './trade';
 import { info, error, debug } from './utils/logger';
-import { fetchAllLedgers, fetchTradesHistory, fetchPrices, fetchAccountBalance } from './utils/kraken';
+import { fetchAllLedgers, fetchTradesHistory, fetchPrices, fetchAccountBalance, fetchTradeBalance } from './utils/kraken';
 import { getEarnTransactions } from './ledger';
 import { getPublicTickerPair, mapPublicPairToAsset, krakenPair, mapKrakenAsset } from './utils/assetMapper';
 
@@ -19,6 +19,7 @@ app.get('/api/all-data', async (_req, res) => {
         const depositsRaw = await fetchDepositsRaw();
         const withdrawalsRaw = await fetchWithdrawalsRaw();
         const accountBalance = await fetchAccountBalance();
+        const TradeBalance = await fetchTradeBalance();
 
         debug('[BalanceEx Raw]', JSON.stringify(accountBalance, null, 2));
         
@@ -84,6 +85,7 @@ app.get('/api/all-data', async (_req, res) => {
         res.json({
             portfolioValue,
             accountBalance,
+            TradeBalance,
             deposits,
             withdrawals,
             buys,
