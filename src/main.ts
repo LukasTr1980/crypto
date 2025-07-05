@@ -1,4 +1,3 @@
-import { FundingResult } from './funding';
 import { fmt, fmtEuro } from './utils/fmt';
 import { info, error } from './utils/logger';
 import { mapKrakenAsset } from './utils/assetMapper';
@@ -10,50 +9,12 @@ interface AllDataResponse {
     tradeBalance: any;
     tradesHistory: { trades: Record<string, any> };
     ledgers: any[];
-    deposits: FundingResult;
-    withdrawals: FundingResult;
 }
 
 function row(cells: (string | number)[], numIdx: number[] = []) {
     return `<tr>${cells
         .map((c, i) => `<td${numIdx.includes(i) ? ' class="num"' : ''}>${c}</td>`)
         .join('')}</tr>`;
-}
-
-function renderFundingTable(result: FundingResult, caption: string) {
-    const header =
-        '<tr><th>Time</th><th>Asset</th>' +
-        '<th class="num">Amount</th>' +
-        '<th class="num">Fee</th>' +
-        '<th class="num">Net</th></tr>';
-
-    const body = result.items
-        .map(i => row([
-            i.time,
-            i.asset,
-            fmt(i.amount, 2),
-            fmt(i.fee, 2),
-            fmt(i.net, 2)
-        ], [2, 3, 4]))
-        .join('');
-
-    const summary = row([
-        '<strong>Total</strong>',
-        '',
-        `<strong>${fmt(result.gross, 2)}</strong>`,
-        `<strong>${fmt(result.feeSum, 2)}</strong>`,
-        `<strong>${fmt(result.netTotal, 2)}</strong>`,
-    ]);
-
-    return `
-    <section>
-        <h2>${caption}</h2>
-        <table>
-            <thead>${header}</thead>
-            <tbody>${body}</tbody>
-            <tfoot>${summary}</tfoot>
-        </table>
-    </section>`;
 }
 
 function renderBalance(value: number) {
@@ -264,9 +225,7 @@ async function load() {
             renderBalanceExTable(data.accountBalance) +
             renderTradeBalanceTable(data.tradeBalance) +
             renderTradesHistoryTable(data.tradesHistory) +
-            renderLedgersTable(data.ledgers) +
-            renderFundingTable(data.deposits, 'Deposits') +
-            renderFundingTable(data.withdrawals, 'Withdrawals');
+            renderLedgersTable(data.ledgers);
 
         el.innerHTML = html;
         info('[Main] Page data loaded and rendered');

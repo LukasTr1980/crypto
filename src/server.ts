@@ -1,6 +1,5 @@
 import express from 'express';
 import path from 'path';
-import { fetchDepositsRaw, fetchWithdrawalsRaw, processDeposits, processWithdrawals } from './funding';
 import { info, error, debug } from './utils/logger';
 import { fetchAllLedgers, fetchTradesHistory, fetchPrices, fetchAccountBalance, fetchTradeBalance } from './utils/kraken';
 import { getPublicTickerPair, mapPublicPairToAsset, krakenPair, mapKrakenAsset } from './utils/assetMapper';
@@ -14,17 +13,12 @@ app.get('/api/all-data', async (_req, res) => {
         const ledgers = await fetchAllLedgers();
         const tradesHistory = await fetchTradesHistory();
         const tradesRaw = Object.values(tradesHistory.trades ?? {});
-        const depositsRaw = await fetchDepositsRaw();
-        const withdrawalsRaw = await fetchWithdrawalsRaw();
         const accountBalance = await fetchAccountBalance();
         const tradeBalance = await fetchTradeBalance();
 
         debug('[Ledgers Raw]', JSON.stringify(ledgers.slice(0, 5), null, 2));
         
-        info(`Fetched ${ledgers.length} ledgers, ${tradesRaw.length} trades, ${depositsRaw.length} deposits, ${withdrawalsRaw.length} withdrawals.`);
-
-        const deposits = processDeposits(depositsRaw);
-        const withdrawals = processWithdrawals(withdrawalsRaw);
+        info(`Fetched ${ledgers.length} ledgers, ${tradesRaw.length} trades.`);
 
         const allTradesAssets = new Set([
             ...Object.keys(accountBalance).map(mapKrakenAsset),
@@ -78,8 +72,6 @@ app.get('/api/all-data', async (_req, res) => {
             tradeBalance,
             tradesHistory,
             ledgers,
-            deposits,
-            withdrawals,
         });
         info('[All-Data API] Success');
 
