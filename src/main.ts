@@ -1,5 +1,4 @@
 import { FundingResult } from './funding';
-import { TradeResult } from './trade';
 import { fmt, fmtEuro } from './utils/fmt';
 import { info, error } from './utils/logger';
 import { EarnTransactions } from './ledger';
@@ -13,8 +12,6 @@ interface AllDataResponse {
     tradesHistory: { trades: Record<string, any> };
     deposits: FundingResult;
     withdrawals: FundingResult;
-    buys: TradeResult;
-    sells: TradeResult;
     earnTransactions: EarnTransactions[];
 }
 
@@ -60,53 +57,6 @@ function renderFundingTable(result: FundingResult, caption: string) {
     </section>`;
 }
 
-function renderTradeTable(result: TradeResult, caption: string) {
-    const header =
-        '<tr><th>Time</th><th>Pair</th><th>Side</th>' +
-        '<th class="num">Price €</th>' +
-        '<th class="num">Volume</th>' +
-        '<th class="num">Cost €</th>' +
-        '<th class="num">Fee €</th></tr>';
-
-    const body = result.items
-        .map(t =>
-            row(
-                [
-                    t.time,
-                    t.pair,
-                    t.type.toUpperCase(),
-                    fmtEuro(t.price, 2),
-                    fmt(t.volume, 8),
-                    fmtEuro(t.cost, 2),
-                    fmtEuro(t.fee, 2),
-                ],
-                [3, 4, 5, 6]
-            )
-        )
-        .join('');
-
-    const summary = row(
-        [
-            '<strong>Total</strong>',
-            '',
-            '',
-            '',
-            `<strong>${fmt(result.volumeTotal, 8)}</strong>`,
-            `<strong>${fmtEuro(result.costTotal, 2)}</strong>`,
-            `<strong>${fmtEuro(result.feeTotal, 8)}</strong>`
-        ],
-        [4, 5, 6]
-    );
-
-    return `
-    <section>
-        <h2>${caption}</h2>
-        <table>
-            <thead>${header}</thead>
-            <tbody>${body}</tbody>
-        </table>
-    </section>`;
-}
 
 function renderEarnTable(items: EarnTransactions[]) {
     const header =
@@ -307,8 +257,6 @@ async function load() {
             renderTradeBalanceTable(data.tradeBalance) +
             renderTradesHistoryTable(data.tradesHistory) +
             renderEarnTable(data.earnTransactions) +
-            renderTradeTable(data.buys, 'Buys') +
-            renderTradeTable(data.sells, 'Sells') +
             renderFundingTable(data.deposits, 'Deposits') +
             renderFundingTable(data.withdrawals, 'Withdrawals');
 

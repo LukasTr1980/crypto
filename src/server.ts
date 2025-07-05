@@ -1,7 +1,6 @@
 import express from 'express';
 import path from 'path';
 import { fetchDepositsRaw, fetchWithdrawalsRaw, processDeposits, processWithdrawals } from './funding';
-import { processBuys, processSells } from './trade';
 import { info, error, debug } from './utils/logger';
 import { fetchAllLedgers, fetchTradesHistory, fetchPrices, fetchAccountBalance, fetchTradeBalance } from './utils/kraken';
 import { getEarnTransactions } from './ledger';
@@ -27,13 +26,9 @@ app.get('/api/all-data', async (_req, res) => {
 
         const deposits = processDeposits(depositsRaw);
         const withdrawals = processWithdrawals(withdrawalsRaw);
-        const buys = processBuys(tradesRaw, ledgers);
-        const sells = processSells(tradesRaw, ledgers);
         const earnTransactions = getEarnTransactions(ledgers);
 
         const allTradesAssets = new Set([
-            ...buys.items.map(t => t.asset),
-            ...sells.items.map(t => t.asset),
             ...earnTransactions.map(t => t.asset),
             ...Object.keys(accountBalance).map(mapKrakenAsset),
         ]);
@@ -87,8 +82,6 @@ app.get('/api/all-data', async (_req, res) => {
             tradesHistory,
             deposits,
             withdrawals,
-            buys,
-            sells,
             earnTransactions
         });
         info('[All-Data API] Success');
