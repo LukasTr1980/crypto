@@ -4,9 +4,7 @@ import { sha256, sha512 } from '@noble/hashes/sha2';
 import { hmac } from '@noble/hashes/hmac';
 import { base64 } from '@scure/base';
 import { nextNonce } from './nonce';
-import { info, error, debug } from './logger';
-
-info(process.env.NODE_ENV);
+import { info, error } from './logger';
 
 if (process.env.NODE_ENV !== 'production') {
     dotenv.config();
