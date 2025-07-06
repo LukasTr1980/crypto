@@ -1,45 +1,63 @@
 import { info } from "./utils/logger";
 import { mapKrakenAsset } from "./utils/assetMapper";
 
-interface BtcValueResult {
-    btcBalance: number;
+export interface AssetValue {
+    asset: string;
+    balance: number;
+    priceInEur: number;
     eurValue: number;
-    btcPrice: number;
 }
 
-export function calculateBtcValue(
+function findEurPriceTicker(assetCode: string, marketPrices: Record<string, any>): any | null {
+    const potentialPairs = [
+        `${assetCode}EUR`,
+        `${assetCode}ZEUR`,
+    ];
+
+    for (const pair of potentialPairs) {
+        if (marketPrices[pair]) {
+            info(`[Calculations] Found price for ${assetCode} in pair ${pair}`);
+            return marketPrices[pair];
+        }
+    }
+    return null;
+}
+
+export function calculateAssetsValue(
     accountBalance: Record<string, { balance: string }>,
     marketPrices: Record<string, any>
-): BtcValueResult | null {
+): AssetValue[] {
 
-    info('[Calculations] Calculating BTC value...');
+    info('[Calculations] Calculating value for all assets...');
 
-    let totalBtcBalance = 0;
+    const calculatedAssets: AssetValue[] = [];
+
     for (const [assetCode, data] of Object.entries(accountBalance)) {
-        if (mapKrakenAsset(assetCode) === 'BTC') {
-            totalBtcBalance += parseFloat(data.balance);
+        const balance = parseFloat(data.balance);
+
+        if (balance === 0 || mapKrakenAsset(assetCode) === 'EUR') {
+            continue;
+        }
+
+        const ticker = findEurPriceTicker(assetCode, marketPrices);
+
+        if (ticker) {
+            const priceInEur = parseFloat(ticker.c[0]);
+            const eurValue = balance * priceInEur;
+
+            calculatedAssets.push({
+                asset: mapKrakenAsset(assetCode),
+                balance,
+                priceInEur,
+                eurValue,
+            });
+        } else {
+            info(`[Calculations] Could not find EUR price ticker for asset: ${assetCode}`);
         }
     }
 
-    if (totalBtcBalance === 0) {
-        info('[Calculations] No BTC balance found.');
-        return null;
-    }
+    calculatedAssets.sort((a, b) => b.eurValue - a.eurValue);
 
-    const btcEurTicker = marketPrices['XXBTZEUR'];
-    if (!btcEurTicker) {
-        info('[Calculations] No BTC/EUR price ticker found in market data.');
-        return null;
-    }
-
-    const btcPriceInEur = parseFloat(btcEurTicker.c[0]);
-    const eurValue = totalBtcBalance * btcPriceInEur;
-
-    info(`[Calculations] BTC Balance: ${totalBtcBalance}, Price: ${btcPriceInEur}, Calculated EUR Value: ${eurValue}`);
-
-    return {
-        btcBalance: totalBtcBalance,
-        eurValue: eurValue,
-        btcPrice: btcPriceInEur
-    };
+    info(`[Calculations] Finished. Calculated value for ${calculatedAssets.length} assets.`);
+    return calculatedAssets;
 }
