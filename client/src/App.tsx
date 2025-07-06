@@ -1,4 +1,3 @@
-import './App.css'
 import DataPage from './DataPage'
 import '../public/styles.css'
 
