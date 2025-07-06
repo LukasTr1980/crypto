@@ -44,6 +44,12 @@ export type Trade = {
     ordertxid: string;
 };
 
+export interface AverageBuyPricesStats {
+    totalVolume: number;
+    totalCostEur: number;
+    averagePriceEur: number;
+}
+
 export interface AllData {
     accountBalance: Record<string, { balance: string; hold_trade: string }>;
     tradeBalance: TradeBalance;
@@ -51,6 +57,7 @@ export interface AllData {
     ledgers: Ledger[];
     calculatedAssets: AssetValue[];
     totalValueEur: number;
+    averageBuyPrices: Record<string, AverageBuyPricesStats>;
 }
 
 const AssetValueTable = ({ assets }: { assets: AssetValue[] }) => {
@@ -257,6 +264,47 @@ const LedgersTable = ({ ledgers }: { ledgers: Ledger[] }) => {
     );
 };
 
+const AverageBuyPriceTable = ({ buyPrices }: { buyPrices: Record<string, AverageBuyPricesStats> }) => {
+    const assets = Object.keys(buyPrices);
+    if (assets.length === 0) {
+        return (
+            <section>
+                <h2>Average Buy Prices</h2>
+                <p>No EUR-based buy trades found to calculate averages.</p>
+            </section>
+        );
+    }
+
+    return (
+        <section>
+            <h2>Average Buy Prices (vs. EUR)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th className="num">Total Volume bought</th>
+                        <th className="num">Total Cost (€)</th>
+                        <th className="num">Average Buy Price (€)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {assets.sort().map(asset => {
+                        const stats = buyPrices[asset];
+                        return (
+                            <tr key={asset}>
+                                <td>{asset}</td>
+                                <td className="num">{fmt(stats.totalVolume, 8)}</td>
+                                <td className="num">{fmtEuro(stats.totalCostEur)}</td>
+                                <td className="num">{fmtEuro(stats.averagePriceEur)}</td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </section>
+    );
+};
+
 export default function DataPage () {
     const [data, setData] = useState<AllData | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -289,6 +337,7 @@ export default function DataPage () {
             </header>
             <main id="content">
                 <AssetValueTable assets={data.calculatedAssets} />
+                <AverageBuyPriceTable buyPrices={data.averageBuyPrices} />
                 <BalanceExTable balanceData={data.accountBalance} />
                 <TradeBalanceTable tradeBalance={data.tradeBalance} />
                 <TradesHistoryTable tradesHistory={data.tradesHistory} />
