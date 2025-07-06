@@ -15,13 +15,12 @@ app.get('/api/all-data', async (_req, res) => {
         const accountBalance = await fetchAccountBalance();
         const tradeBalance = await fetchTradeBalance();
 
-        const marketPrices = await fetchPrices();
+        const prices = await fetchPrices();
 
-        const calculatedAssets = calculateAssetsValue(accountBalance, marketPrices);
+        const calculatedAssets = calculateAssetsValue(accountBalance, prices);
 
         const tradesCount = Object.keys(tradesHistory.trades ?? {}).length;
         info(`[Fetched] ${ledgers.length} ledgers, ${tradesCount} trades.`);
-        debug('[Ledgers Raw]', JSON.stringify(ledgers.slice(0, 5), null, 2));
 
         res.json({
             accountBalance,
