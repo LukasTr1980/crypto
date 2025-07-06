@@ -2,25 +2,36 @@ import { useEffect, useState } from "react";
 import { fmt, fmtEuro } from "./utils/fmt";
 import { dt } from "./utils/dt";
 
+export interface AssetValue {
+    asset: string;
+    balance: number;
+    priceInEur: number;
+    eurValue: number;
+}
+
 function row(cells: (string | number)[], numIdx: number[] = []) {
     return `<tr>${cells
         .map((c, i) => `<td${numIdx.includes(i) ? ' class="num"' : ''}>${c}</td>`)
         .join('')}</tr>`;
 }
 
-function renderBtcValueTable(btcValue: { btcBalance: number; eurValue: number; btcPrice: number } | null) {
-    if (!btcValue) {
-        return '<section><h2>Calculated BTC Value</h2><p>No BTC balance found to calculate value.</p></section>';
+function renderAssetValueTable(assets: AssetValue[]) {
+    if (!assets || assets.length === 0) {
+        return '<section><h2>Calculated Assets Value</h2><p>No assets values could be calculated.</p></section>';
     }
 
-    const header = '<tr><th>Description</th><th class="num">Value</th></tr>';
-    const body = [
-        row(['BTC Balance', fmt(btcValue.btcBalance, 8)], [1]),
-        row(['Current BTC Price', fmt(btcValue.btcPrice, 2)], [1]),
-        row(['Value in EUR', fmt(btcValue.eurValue, 2)], [1]),
-    ].join('');
+    const header = '<tr><th>Asset</th><th class="num">Balance</th><th class="num">Marketprice (€)</th><th class="num">Value (€)</th></tr>';
 
-    return `<section><h2>Calculated BTC Value</h2><table><thead>${header}</thead><tbody>${body}</body></table></section>`;
+    const body = assets.map(a => {
+        return row([
+            a.asset,
+            fmt(a.balance, 8),
+            fmtEuro(a.priceInEur, 2),
+            fmtEuro(a.eurValue, 2)
+        ], [1,2,3]);
+    }).join('');
+
+    return `<section><h2>Calculated Assets Value</h2><table><thead>${header}</thead><tbody>${body}</body></table></section>`;
 }
 
 function renderBalanceExTable(balanceData: Record<string, { balance: string; hold_trade: string; }>) {
@@ -229,11 +240,7 @@ export interface AllData {
     tradeBalance: TradeBalance;
     tradesHistory: { trades: Record<string, Trade> };
     ledgers: Ledger[];
-    btcValue: {
-        btcBalance: number;
-        eurValue: number;
-        btcPrice: number;
-    } | null;
+    calculatedAssets: AssetValue[];
 }
 
 export default function DataPage() {
@@ -258,7 +265,7 @@ export default function DataPage() {
     if (!data) return <div className="loader" />;
 
     const html =
-        renderBtcValueTable(data.btcValue) +
+        renderAssetValueTable(data.calculatedAssets) +
         renderBalanceExTable(data.accountBalance) +
         renderTradeBalanceTable(data.tradeBalance) +
         renderTradesHistoryTable(data.tradesHistory) +
