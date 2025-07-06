@@ -4,14 +4,12 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "build": "npm run build:server && npm run build:client",
+    "build": "npm run build:server",
     "build:server": "tsc",
-    "build:client": "esbuild src/main.ts --bundle --format=iife --target=es2017 --outfile=public/main.js",
     "start:prod": "node dist/server.js",
-    "dev": "concurrently --kill-others-on-fail \"npm:dev:server\" \"npm:dev:client\"",
+    "dev": "concurrently --kill-others-on-fail \"npm:dev:server\" \"npm --prefix ../client run dev\"",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev:server": "nodemon",
-    "dev:client": "esbuild src/main.ts --bundle --format=iife --target=es2017 --outfile=public/main.js --watch"
+    "dev:server": "nodemon"
   },
   "keywords": [],
   "author": "",
@@ -29,7 +27,6 @@
     "@types/express": "^5.0.3",
     "@types/node": "^24.0.4",
     "concurrently": "^9.2.0",
-    "esbuild": "^0.25.5",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
