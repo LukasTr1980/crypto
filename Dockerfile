@@ -15,6 +15,7 @@ RUN npm run build --prefix server
 
 FROM node:22-slim AS runtime
 WORKDIR /app
+
 ENV NODE_ENV=production
 
 COPY server/package*.json ./server/
@@ -28,6 +29,7 @@ COPY docker-entrypoint.sh /usr/local/bin
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 3000
-ENTRYPOINT [ "docker-entrypoint.sh" ]
+
+ENTRYPOINT [ "/usr/local/bin/docker-entrypoint.sh" ]
 CMD ["node", "/app/server/dist/server.js"]
 
