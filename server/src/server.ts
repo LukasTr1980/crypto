@@ -38,7 +38,7 @@ app.get('/api/all-data', async (_req, res) => {
     }
 });
 
-app.use(express.static(path.join(__dirname, '..', '..', 'public', 'dist')));
+app.use(express.static(path.join(__dirname, '..', '..', 'client', 'dist')));
 
 app.listen(port, () => {
     info(`Server running on http://localhost:${port}`);
