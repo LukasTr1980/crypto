@@ -1,14 +1,6 @@
-import { fmt, fmtEuro } from './utils/fmt';
-import { info, error } from '../../server/src/utils/logger';
-import { dt } from './utils/dt';
-
-interface AllDataResponse {
-    accountBalance: Record<string, { balance: string; hold_trade: string }>;
-    tradeBalance: any;
-    tradesHistory: { trades: Record<string, any> };
-    ledgers: any[];
-    btcValue: { btcBalance: number; eurValue: number; btcPrice: number; } | null;
-}
+import { useEffect, useState } from "react";
+import { fmt, fmtEuro } from "./utils/fmt";
+import { dt} from "./utils/dt";
 
 function row(cells: (string | number)[], numIdx: number[] = []) {
     return `<tr>${cells
@@ -197,36 +189,46 @@ function renderLedgersTable(ledgers: any[]) {
     </section>`;
 }
 
-async function load() {
-    const el = document.getElementById('content');
-    if (!el) {
-        throw new Error('#content element not found');
-    }
+type AllData = {
+    accountBalance = Record<string, { balance: string; hold_trade: string }>;
+    tradeBalance: any;
+    tradesHistory: { trades: Record<string, any> };
+    ledgers: any[];
+    btcValue: { btcBalance: number; eurValue: number; btcPrice: number } | null;
+};
 
-    info('[Main] Loading all page data from single endpoint');
-    try {
-        const res = await fetch('api/all-data');
-        if (!res.ok) {
-            const body = await res.json().catch(() => ({ error: `Servererror: ${res.status}` }));
-            throw new Error(body.error ?? `HTTP ${res.status}`);
-        }
+export default function DataPage () {
+    const [ data, setData ] = useState<AllData | null>(null);
+    const [ error, setError ] = useState<string | null>(null);
 
-        const data: AllDataResponse = await res.json();
-        info('[Main] api/all-data OK');
+    useEffect(() => {
+        (async () => {
+            try {
+                console.info('[DataPage] fetching...');
+                const r = await fetch('/api/all-data');
+                if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+                setData(await r.json());
+            } catch (e: any) {
+                setError(e.message ?? 'unkown error');
+            }
+        })();
+    }, []);
 
-        let html =
-            renderBtcValueTable(data.btcValue) +
-            renderBalanceExTable(data.accountBalance) +
-            renderTradeBalanceTable(data.tradeBalance) +
-            renderTradesHistoryTable(data.tradesHistory) +
-            renderLedgersTable(data.ledgers);
+    if (error) return <p style={{ color: 'red' }}>{error}</p>;
+    if (!data) return <div className="loader" />;
 
-        el.innerHTML = html;
-        info('[Main] Page data loaded and rendered');
-    } catch (err: any) {
-        el.innerHTML = `<p style="color:red">Error while loading data: ${err.message}</p>`;
-        error(err);
-    }
+    const html = 
+        renderBtcValueTable(data.btcValue) +
+        renderBalanceExTable(data.accountBalance) +
+        renderTradeBalanceTable(data.tradeBalance) +
+        renderTradesHistoryTable(data.tradesHistory) +
+        renderLedgersTable(data.ledgers);
+
+    return (
+        <>
+        <link rel="stylesheet" href="/styles.css" />
+        <header><h1>Crypto</h1></header>
+        <div id="content" dangerouslySetInnerHTML={{ __html: html }} />
+        </>
+    );
 }
-
-document.addEventListener('DOMContentLoaded', load);

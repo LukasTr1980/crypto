@@ -23,5 +23,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "../server/src/utils/logger.ts", "../server/src/utils/fmt.ts", "../server/src/utils/nonce.ts", "../server/src/utils/dt.ts", "../server/src/utils/assetMapper.ts", "../server/src/calculations.ts"]
+  "include": ["src"]
 }
