@@ -17,7 +17,7 @@ app.get('/api/all-data', async (_req, res) => {
         const prices = await fetchPrices();
 
         const portFolioData = calculateAssetsValue(accountBalance, prices);
-        const averageBuyPrices = calculateAverageBuyPrices(tradesHistory);
+        const averageBuyPrices = calculateAverageBuyPrices(tradesHistory, ledgers);
 
         const tradesCount = Object.keys(tradesHistory.trades ?? {}).length;
         info(`[Fetched] ${ledgers.length} ledgers, ${tradesCount} trades.`);

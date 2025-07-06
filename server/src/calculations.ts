@@ -111,7 +111,8 @@ export function calculateAssetsValue(
 }
 
 export function calculateAverageBuyPrices(
-    tradesHistory: { trades: Record<string, any> }
+    tradesHistory: { trades: Record<string, any> },
+    ledgers: any[]
 ): Record<string, AverageBuyPriceStats> {
     info('[Calculations] Calculating average buy prices...');
     const stats: Record<string, { totalVolume: number; totalCostEur: number }> = {};
@@ -133,6 +134,37 @@ export function calculateAverageBuyPrices(
 
         stats[asset].totalVolume += volume;
         stats[asset].totalCostEur += cost;
+    }
+
+    const groupedByRefId: Record<string, any[]> = {};
+    for (const l of ledgers) {
+        if (!groupedByRefId[l.refid]) {
+            groupedByRefId[l.refid] = [];
+        }
+        groupedByRefId[l.refid].push(l);
+    }
+
+    for (const refId in groupedByRefId) {
+        const group = groupedByRefId[refId];
+        if (group.length !== 2) continue;
+
+        const eurSpend = group.find(l => l.type === 'spend' && l.asset.toUpperCase().includes('EUR'));
+        const cryptoReceive = group.find(l => l.type === 'receive' && !l.asset.toUpperCase().includes('EUR'));
+
+        if (eurSpend && cryptoReceive) {
+            const asset = mapKrakenAsset(cryptoReceive.asset);
+            const volume = parseFloat(cryptoReceive.amount);
+            const cost = Math.abs(parseFloat(eurSpend.amount));
+
+            info(`[Calculations] Found instant buy via ledger for ${asset}: ${volume} for €${cost}`);
+
+            if (!stats[asset]) {
+                stats[asset] = { totalVolume: 0, totalCostEur: 0 };
+            }
+
+            stats[asset].totalVolume += volume;
+            stats[asset].totalCostEur += cost;
+        }
     }
 
     const result: Record<string, AverageBuyPriceStats> = {};
