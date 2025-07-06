@@ -8,19 +8,22 @@ export interface AssetValue {
     eurValue: number;
 }
 
-function findEurPriceTicker(assetCode: string, marketPrices: Record<string, any>): any | null {
-    const potentialPairs = [
-        `${assetCode}EUR`,
-        `${assetCode}ZEUR`,
+function findEurPriceTicker(code: string, marketPrices: Record<string, any>): any | null {
+    const base = code.toUpperCase();
+
+    const variants = [
+        `${code}EUR`,
+        `${code}ZEUR`,
+        `X${code}EUR`,
+        `X${code}ZEUR`
     ];
 
-    for (const pair of potentialPairs) {
-        if (marketPrices[pair]) {
-            info(`[Calculations] Found price for ${assetCode} in pair ${pair}`);
-            return marketPrices[pair];
-        }
+    if (base === 'BTC') {
+        variants.push('XBTEUR', 'XXBTZEUR', 'XBTZEUR', 'XXBTEUR');
     }
-    return null;
+
+    const pair = variants.find(v => marketPrices[v]);
+    return pair ? marketPrices[pair] : null;
 }
 
 export function calculateAssetsValue(
@@ -30,34 +33,28 @@ export function calculateAssetsValue(
 
     info('[Calculations] Calculating value for all assets...');
 
-    const calculatedAssets: AssetValue[] = [];
+    const assets: AssetValue[] = [];
 
-    for (const [assetCode, data] of Object.entries(accountBalance)) {
+    for (const [rawCode, data] of Object.entries(accountBalance)) {
         const balance = parseFloat(data.balance);
+        const baseCode = mapKrakenAsset(rawCode);
 
-        if (balance === 0 || mapKrakenAsset(assetCode) === 'EUR') {
+        if (balance === 0 || baseCode === 'EUR') continue;
+
+        const ticker = findEurPriceTicker(baseCode, marketPrices);
+        if (!ticker) {
+            info(`[Calculations] No EUR price for ${rawCode} (-> ${baseCode})`);
             continue;
         }
 
-        const ticker = findEurPriceTicker(assetCode, marketPrices);
-
-        if (ticker) {
-            const priceInEur = parseFloat(ticker.c[0]);
-            const eurValue = balance * priceInEur;
-
-            calculatedAssets.push({
-                asset: mapKrakenAsset(assetCode),
-                balance,
-                priceInEur,
-                eurValue,
-            });
-        } else {
-            info(`[Calculations] Could not find EUR price ticker for asset: ${assetCode}`);
-        }
+        const priceInEur = parseFloat(ticker.c[0]);
+        assets.push({
+            asset: baseCode,
+            balance,
+            priceInEur,
+            eurValue: balance * priceInEur,
+        });
     }
 
-    calculatedAssets.sort((a, b) => b.eurValue - a.eurValue);
-
-    info(`[Calculations] Finished. Calculated value for ${calculatedAssets.length} assets.`);
-    return calculatedAssets;
+    return assets.sort((a, b) => b.eurValue - a.eurValue);
 }

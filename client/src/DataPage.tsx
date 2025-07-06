@@ -20,15 +20,14 @@ function renderAssetValueTable(assets: AssetValue[]) {
         return '<section><h2>Calculated Assets Value</h2><p>No assets values could be calculated.</p></section>';
     }
 
-    const header = '<tr><th>Asset</th><th class="num">Balance</th><th class="num">Price (€)</th><th class="num">Value (€)</th></tr>';
+    const header = '<tr><th>Asset</th><th class="num">Balance</th><th class="num">Marketprice (€)</th><th class="num">Value (€)</th></tr>';
 
-    const body = assets.map(asset => {
-        const balanceDigits = asset.asset === 'BTC' ? 8 : 4;
+    const body = assets.map(a => {
         return row([
-            asset.asset,
-            fmt(asset.balance, balanceDigits),
-            fmtEuro(asset.priceInEur, 4),
-            fmtEuro(asset.eurValue, 2)
+            a.asset,
+            fmt(a.balance, 8),
+            fmtEuro(a.priceInEur, 2),
+            fmtEuro(a.eurValue, 2)
         ], [1,2,3]);
     }).join('');
 
