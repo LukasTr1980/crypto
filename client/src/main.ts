@@ -1,6 +1,6 @@
-import { fmt, fmtEuro } from './utils/fmt';
-import { info, error } from './utils/logger';
-import { dt } from './utils/dt';
+import { fmt, fmtEuro } from '../../server/src/utils/fmt';
+import { info, error } from '../../server/src/utils/logger';
+import { dt } from '../../server/src/utils/dt';
 
 interface AllDataResponse {
     accountBalance: Record<string, { balance: string; hold_trade: string }>;
