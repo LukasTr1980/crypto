@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { fmt, fmtEuro } from "./utils/fmt";
-import { dt} from "./utils/dt";
+import { dt } from "./utils/dt";
 
 function row(cells: (string | number)[], numIdx: number[] = []) {
     return `<tr>${cells
@@ -58,7 +58,7 @@ function renderBalanceExTable(balanceData: Record<string, { balance: string; hol
     </section>`;
 }
 
-function renderTradeBalanceTable(tradeBalance: any) {
+function renderTradeBalanceTable(tradeBalance: TradeBalance) {
     if (!tradeBalance || Object.keys(tradeBalance).length === 0) {
         return `
         <section>
@@ -69,7 +69,7 @@ function renderTradeBalanceTable(tradeBalance: any) {
 
     const header = '<tr><th colspan="2">Trade Balance Summary</th></tr>';
 
-    const rowsMap = [
+    const rowsMap: Array<{ key: keyof TradeBalance; label: string }> = [
         { key: 'eb', label: 'Equivalent Balance (Equity)' },
         { key: 'tb', label: 'Trade Balance (Collateral)' },
         { key: 'm', label: 'Margin Used' },
@@ -102,7 +102,7 @@ function renderTradeBalanceTable(tradeBalance: any) {
     </section>`
 }
 
-function renderTradesHistoryTable(tradesHistory: { trades: Record<string, any> }) {
+function renderTradesHistoryTable(tradesHistory: { trades: Record<string, Trade> }) {
     if (!tradesHistory || !tradesHistory.trades || Object.keys(tradesHistory.trades).length === 0) {
         return `
         <section>
@@ -146,7 +146,7 @@ function renderTradesHistoryTable(tradesHistory: { trades: Record<string, any> }
     </section>`;
 }
 
-function renderLedgersTable(ledgers: any[]) {
+function renderLedgersTable(ledgers: Ledger[]) {
     if (!ledgers || ledgers.length === 0) {
         return `
         <section>
@@ -189,17 +189,56 @@ function renderLedgersTable(ledgers: any[]) {
     </section>`;
 }
 
-type AllData = {
-    accountBalance = Record<string, { balance: string; hold_trade: string }>;
-    tradeBalance: any;
-    tradesHistory: { trades: Record<string, any> };
-    ledgers: any[];
-    btcValue: { btcBalance: number; eurValue: number; btcPrice: number } | null;
+export type Ledger = {
+    time: number;
+    asset: string;
+    type: string;
+    subtype?: string;
+    amount: string;
+    fee: string;
+    balance: string;
+    refid: string;
 };
 
-export default function DataPage () {
-    const [ data, setData ] = useState<AllData | null>(null);
-    const [ error, setError ] = useState<string | null>(null);
+export type TradeBalance = {
+    eb: string;
+    tb: string;
+    m: string;
+    n: string;
+    c: string;
+    v: string;
+    e: string;
+    mf: string;
+    ml: string;
+}
+
+export type Trade = {
+    time: number;
+    pair: string;
+    type: 'buy' | 'sell';
+    ordertype: string;
+    price: string;
+    vol: string;
+    cost: string;
+    fee: string;
+    ordertxid: string;
+};
+
+export interface AllData {
+    accountBalance: Record<string, { balance: string; hold_trade: string }>;
+    tradeBalance: TradeBalance;
+    tradesHistory: { trades: Record<string, Trade> };
+    ledgers: Ledger[];
+    btcValue: {
+        btcBalance: number;
+        eurValue: number;
+        btcPrice: number;
+    } | null;
+}
+
+export default function DataPage() {
+    const [data, setData] = useState<AllData | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         (async () => {
@@ -208,8 +247,9 @@ export default function DataPage () {
                 const r = await fetch('/api/all-data');
                 if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
                 setData(await r.json());
-            } catch (e: any) {
-                setError(e.message ?? 'unkown error');
+            } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                setError(message);
             }
         })();
     }, []);
@@ -217,7 +257,7 @@ export default function DataPage () {
     if (error) return <p style={{ color: 'red' }}>{error}</p>;
     if (!data) return <div className="loader" />;
 
-    const html = 
+    const html =
         renderBtcValueTable(data.btcValue) +
         renderBalanceExTable(data.accountBalance) +
         renderTradeBalanceTable(data.tradeBalance) +
@@ -226,9 +266,9 @@ export default function DataPage () {
 
     return (
         <>
-        <link rel="stylesheet" href="/styles.css" />
-        <header><h1>Crypto</h1></header>
-        <div id="content" dangerouslySetInnerHTML={{ __html: html }} />
+            <link rel="stylesheet" href="/styles.css" />
+            <header><h1>Crypto</h1></header>
+            <div id="content" dangerouslySetInnerHTML={{ __html: html }} />
         </>
     );
 }
