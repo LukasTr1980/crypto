@@ -1,5 +1,5 @@
 import { info } from "./utils/logger";
-import { mapKrakenAsset } from "./utils/assetMapper";
+import { mapKrakenAsset, getTickerBase } from "./utils/assetMapper";
 import { extractPrice } from "./utils/extractPrice";
 
 export interface AssetValue {
@@ -60,20 +60,23 @@ export function calculateAssetsValue(
 
     for (const [raw, data] of Object.entries(account)) {
         const balance = parseFloat(data.balance);
-        const base = mapKrakenAsset(raw).toUpperCase();
-        if (balance === 0 || base === 'EUR') continue;
+
+        const displayName = mapKrakenAsset(raw);
+        if (balance === 0 || displayName === 'EUR') continue;
+
+        const tickerBase = getTickerBase(raw);
 
         let priceEur: number | null = null;
         let source = "";
 
-        let tickerKey = findPriceTicker(base, 'EUR', prices);
+        let tickerKey = findPriceTicker(tickerBase, 'EUR', prices);
         if (tickerKey) {
             priceEur = extractPrice(prices[tickerKey]);
             if (priceEur != null) source = tickerKey;
         }
 
         if (priceEur == null && usd2eur) {
-            tickerKey = findPriceTicker(base, 'USD', prices);
+            tickerKey = findPriceTicker(tickerBase, 'USD', prices);
             if (tickerKey) {
                 const usdPrice = extractPrice(prices[tickerKey]);
                 if (usdPrice != null) {
@@ -84,13 +87,13 @@ export function calculateAssetsValue(
         }
 
         if (priceEur == null) {
-            info(`[Calcualtions] No price for ${raw} (${base})`);
+            info(`[Calcualtions] No price for ${raw} (${tickerBase})`);
             continue;
         }
 
-        info(`[Price] ${base}: € ${priceEur.toFixed(6)}  (via ${source || 'EUR direct'})`);
+        info(`[Price] ${displayName}: € ${priceEur.toFixed(6)}  (via ${source || 'EUR direct'})`);
         cryptoAssetsWithValue.push({
-            asset: base,
+            asset: displayName,
             balance,
             priceInEur: priceEur,
             eurValue: balance * priceEur,
