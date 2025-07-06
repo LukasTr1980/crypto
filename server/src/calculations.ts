@@ -1,5 +1,5 @@
-import { info } from "../../server/src/utils/logger";
-import { mapKrakenAsset } from "../../server/src/utils/assetMapper";
+import { info } from "./utils/logger";
+import { mapKrakenAsset } from "./utils/assetMapper";
 
 interface BtcValueResult {
     btcBalance: number;
