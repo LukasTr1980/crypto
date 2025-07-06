@@ -14,10 +14,9 @@ app.get('/api/all-data', async (_req, res) => {
         const tradesHistory = await fetchAllTradesHistory();
         const accountBalance = await fetchAccountBalance();
         const tradeBalance = await fetchTradeBalance();
-
         const prices = await fetchPrices();
 
-        const calculatedAssets = calculateAssetsValue(accountBalance, prices);
+        const portFolioData = calculateAssetsValue(accountBalance, prices);
 
         const tradesCount = Object.keys(tradesHistory.trades ?? {}).length;
         info(`[Fetched] ${ledgers.length} ledgers, ${tradesCount} trades.`);
@@ -27,7 +26,8 @@ app.get('/api/all-data', async (_req, res) => {
             tradeBalance,
             tradesHistory,
             ledgers,
-            calculatedAssets
+            calculatedAssets: portFolioData.assets,
+            totalValueEur: portFolioData.totalValueEur
         });
         info('[All-Data API] Success');
 

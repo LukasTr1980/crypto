@@ -50,6 +50,7 @@ export interface AllData {
     tradesHistory: { trades: Record<string, Trade> };
     ledgers: Ledger[];
     calculatedAssets: AssetValue[];
+    totalValueEur: number;
 }
 
 const AssetValueTable = ({ assets }: { assets: AssetValue[] }) => {
@@ -281,6 +282,10 @@ export default function DataPage () {
         <>
             <header>
                 <h1>Crypto</h1>
+                <div id="portfolio-balance">
+                    <span>Portfolio Balance</span>
+                    <div>{fmtEuro(data.totalValueEur)}</div>
+                </div>
             </header>
             <main id="content">
                 <AssetValueTable assets={data.calculatedAssets} />

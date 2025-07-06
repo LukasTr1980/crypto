@@ -9,6 +9,11 @@ export interface AssetValue {
     eurValue: number;
 }
 
+export interface CalculatedPortfolio {
+    assets: AssetValue[];
+    totalValueEur: number;
+}
+
 function usdToEur(prices: Record<string, any>): number | null {
     const pairs = ['EURUSD', 'USDEUR', 'USDZEUR'];
     for (const p of pairs) {
@@ -38,14 +43,14 @@ function findPriceTicker(base: string, quote: 'EUR' | 'USD', prices: Record<stri
 export function calculateAssetsValue(
     account: Record<string, { balance: string }>,
     prices: Record<string, any>
-): AssetValue[] {
+): CalculatedPortfolio {
 
     info('[Calculations] Calculating value for all assets...');
 
     const usd2eur = usdToEur(prices);
     if (!usd2eur) info('[Calculations] Could not determine USD->EUR rate');
 
-    const out: AssetValue[] = [];
+    const cryptoAssetsWithValue: AssetValue[] = [];
 
     for (const [raw, data] of Object.entries(account)) {
         const balance = parseFloat(data.balance);
@@ -78,7 +83,7 @@ export function calculateAssetsValue(
         }
 
         info(`[Price] ${base}: € ${priceEur.toFixed(6)}  (via ${source || 'EUR direct'})`);
-        out.push({
+        cryptoAssetsWithValue.push({
             asset: base,
             balance,
             priceInEur: priceEur,
@@ -86,5 +91,15 @@ export function calculateAssetsValue(
         });
     }
 
-    return out.sort((a, b) => b.eurValue - a.eurValue);
+    const sortedCryptoAssets = cryptoAssetsWithValue.sort((a, b) => b.eurValue - a.eurValue);
+    const totalCryptoValueInEur = sortedCryptoAssets.reduce((sum, asset) => sum + asset.eurValue, 0);
+    const eurBalance = parseFloat(account.ZEUR?.balance ?? account.EUR?.balance ?? '0');
+    const totalPortfolioValueInEur = totalCryptoValueInEur + eurBalance;
+
+    info(`[Calculations] Total portfolio value: € ${totalPortfolioValueInEur.toFixed(2)}`);
+
+    return {
+        assets: sortedCryptoAssets,
+        totalValueEur: totalPortfolioValueInEur
+    }
 }
