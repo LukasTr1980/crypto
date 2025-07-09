@@ -7,6 +7,7 @@ export interface AssetValue {
     balance: number;
     priceInEur: number;
     eurValue: number;
+    sharePct: number;
 }
 
 export type Ledger = {
@@ -80,6 +81,7 @@ const AssetValueTable = ({ assets }: { assets: AssetValue[] }) => {
                         <th className="num">Balance</th>
                         <th className="num">MarketPrice (€)</th>
                         <th className="num">Value (€)</th>
+                        <th className="num">% of Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -89,6 +91,7 @@ const AssetValueTable = ({ assets }: { assets: AssetValue[] }) => {
                             <td className="num">{fmt(a.balance, 8)}</td>
                             <td className="num">{fmtEuro(a.priceInEur, 2)}</td>
                             <td className="num">{fmtEuro(a.eurValue, 2)}</td>
+                            <td className="num">{fmt(a.sharePct, 2)} %</td>
                         </tr>
                     ))}
                 </tbody>

@@ -7,6 +7,7 @@ export interface AssetValue {
     balance: number;
     priceInEur: number;
     eurValue: number;
+    sharePct: number;
 }
 
 export interface CalculatedPortfolio {
@@ -69,6 +70,7 @@ export function calculateAssetsValue(
             balance: eurBalance,
             priceInEur: 1, // 1 € == 1 €
             eurValue: eurBalance,
+            sharePct: 0,
         });
     }
 
@@ -113,6 +115,7 @@ export function calculateAssetsValue(
             balance,
             priceInEur: priceEur,
             eurValue: balance * priceEur,
+            sharePct: 0,
         });
     }
 
@@ -122,6 +125,12 @@ export function calculateAssetsValue(
         (sum, asset) => sum + asset.eurValue,
         0
     );
+
+    if (totalPortfolioValueInEur > 0) {
+        sortedAssets.forEach(a => {
+            a.sharePct = (a.eurValue / totalPortfolioValueInEur) * 100;
+        });
+    }
 
     info(
         `[Calculations] Total portfolio value: € ${totalPortfolioValueInEur.toFixed(2)}`
