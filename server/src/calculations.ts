@@ -21,62 +21,76 @@ export interface AverageBuyPriceStats {
 }
 
 function usdToEur(prices: Record<string, any>): number | null {
-    const pairs = ['EURUSD', 'USDEUR', 'USDZEUR'];
+    const pairs = ["EURUSD", "USDEUR", "USDZEUR"];
     for (const p of pairs) {
-        if (prices[p]) return p === 'EURUSD'
-        ? 1 / parseFloat(prices[p].c[0])
-        : parseFloat(prices[p].c[0]);
+        if (prices[p])
+            return p === "EURUSD"
+                ? 1 / parseFloat(prices[p].c[0])
+                : parseFloat(prices[p].c[0]);
     }
     return null;
 }
 
-function findPriceTicker(base: string, quote: 'EUR' | 'USD', prices: Record<string, any>): any | null {
+function findPriceTicker(
+    base: string,
+    quote: "EUR" | "USD",
+    prices: Record<string, any>
+): any | null {
     const variants = [
         `${base}${quote}`,
         `${base}Z${quote}`,
         `X${base}${quote}`,
-        `X${base}Z${quote}`
+        `X${base}Z${quote}`,
     ];
 
-    if (base === 'BTC') {
-        if (quote === 'EUR') variants.push('XBTEUR', 'XXBTZEUR');
-        else variants.push('XBTUSD', 'XXBTZUSD');
+    if (base === "BTC") {
+        if (quote === "EUR") variants.push("XBTEUR", "XXBTZEUR");
+        else variants.push("XBTUSD", "XXBTZUSD");
     }
 
-    return variants.find(v => prices[v]) ?? null;
+    return variants.find((v) => prices[v]) ?? null;
 }
 
 export function calculateAssetsValue(
     account: Record<string, { balance: string }>,
     prices: Record<string, any>
 ): CalculatedPortfolio {
-
-    info('[Calculations] Calculating value for all assets...');
+    info("[Calculations] Calculating value for all assets...");
 
     const usd2eur = usdToEur(prices);
-    if (!usd2eur) info('[Calculations] Could not determine USD->EUR rate');
+    if (!usd2eur) info("[Calculations] Could not determine USD->EUR rate");
 
-    const cryptoAssetsWithValue: AssetValue[] = [];
+    const assetValues: AssetValue[] = [];
+
+    const eurBalance = parseFloat(account.ZEUR?.balance ?? account.EUR?.balance ?? "0");
+    if (eurBalance > 0) {
+        assetValues.push({
+            asset: "EUR",
+            balance: eurBalance,
+            priceInEur: 1, // 1 € == 1 €
+            eurValue: eurBalance,
+        });
+    }
 
     for (const [raw, data] of Object.entries(account)) {
         const balance = parseFloat(data.balance);
 
         const displayName = mapKrakenAsset(raw);
-        if (balance === 0 || displayName === 'EUR') continue;
+        if (balance === 0 || displayName === "EUR") continue;
 
         const tickerBase = getTickerBase(raw);
 
         let priceEur: number | null = null;
         let source = "";
 
-        let tickerKey = findPriceTicker(tickerBase, 'EUR', prices);
+        let tickerKey = findPriceTicker(tickerBase, "EUR", prices);
         if (tickerKey) {
             priceEur = extractPrice(prices[tickerKey]);
             if (priceEur != null) source = tickerKey;
         }
 
         if (priceEur == null && usd2eur) {
-            tickerKey = findPriceTicker(tickerBase, 'USD', prices);
+            tickerKey = findPriceTicker(tickerBase, "USD", prices);
             if (tickerKey) {
                 const usdPrice = extractPrice(prices[tickerKey]);
                 if (usdPrice != null) {
@@ -91,8 +105,10 @@ export function calculateAssetsValue(
             continue;
         }
 
-        info(`[Price] ${displayName}: € ${priceEur.toFixed(6)}  (via ${source || 'EUR direct'})`);
-        cryptoAssetsWithValue.push({
+        info(
+            `[Price] ${displayName}: € ${priceEur.toFixed(6)}  (via ${source || "EUR direct"})`
+        );
+        assetValues.push({
             asset: displayName,
             balance,
             priceInEur: priceEur,
@@ -100,32 +116,36 @@ export function calculateAssetsValue(
         });
     }
 
-    const sortedCryptoAssets = cryptoAssetsWithValue.sort((a, b) => b.eurValue - a.eurValue);
-    const totalCryptoValueInEur = sortedCryptoAssets.reduce((sum, asset) => sum + asset.eurValue, 0);
-    const eurBalance = parseFloat(account.ZEUR?.balance ?? account.EUR?.balance ?? '0');
-    const totalPortfolioValueInEur = totalCryptoValueInEur + eurBalance;
+    const sortedAssets = assetValues.sort((a, b) => b.eurValue - a.eurValue);
 
-    info(`[Calculations] Total portfolio value: € ${totalPortfolioValueInEur.toFixed(2)}`);
+    const totalPortfolioValueInEur = sortedAssets.reduce(
+        (sum, asset) => sum + asset.eurValue,
+        0
+    );
+
+    info(
+        `[Calculations] Total portfolio value: € ${totalPortfolioValueInEur.toFixed(2)}`
+    );
 
     return {
-        assets: sortedCryptoAssets,
-        totalValueEur: totalPortfolioValueInEur
-    }
+        assets: sortedAssets,
+        totalValueEur: totalPortfolioValueInEur,
+    };
 }
 
 export function calculateAverageBuyPrices(
     tradesHistory: { trades: Record<string, any> },
     ledgers: any[]
 ): Record<string, AverageBuyPriceStats> {
-    info('[Calculations] Calculating average buy prices...');
+    info("[Calculations] Calculating average buy prices...");
     const stats: Record<string, { totalVolume: number; totalCostEur: number }> = {};
 
     for (const trade of Object.values(tradesHistory.trades)) {
-        if (trade.type !== 'buy' || !trade.pair.toUpperCase().endsWith('EUR')) {
+        if (trade.type !== "buy" || !trade.pair.toUpperCase().endsWith("EUR")) {
             continue;
         }
 
-        const assetCode = trade.pair.toUpperCase().replace('EUR', '').replace('Z', '');
+        const assetCode = trade.pair.toUpperCase().replace("EUR", "").replace("Z", "");
         const asset = mapKrakenAsset(assetCode);
 
         const volume = parseFloat(trade.vol);
@@ -151,15 +171,21 @@ export function calculateAverageBuyPrices(
         const group = groupedByRefId[refId];
         if (group.length !== 2) continue;
 
-        const eurSpend = group.find(l => l.type === 'spend' && l.asset.toUpperCase().includes('EUR'));
-        const cryptoReceive = group.find(l => l.type === 'receive' && !l.asset.toUpperCase().includes('EUR'));
+        const eurSpend = group.find(
+            (l) => l.type === "spend" && l.asset.toUpperCase().includes("EUR")
+        );
+        const cryptoReceive = group.find(
+            (l) => l.type === "receive" && !l.asset.toUpperCase().includes("EUR")
+        );
 
         if (eurSpend && cryptoReceive) {
             const asset = mapKrakenAsset(cryptoReceive.asset);
             const volume = parseFloat(cryptoReceive.amount);
             const cost = Math.abs(parseFloat(eurSpend.amount));
 
-            info(`[Calculations] Found instant buy via ledger for ${asset}: ${volume} for €${cost}`);
+            info(
+                `[Calculations] Found instant buy via ledger for ${asset}: ${volume} for €${cost}`
+            );
 
             if (!stats[asset]) {
                 stats[asset] = { totalVolume: 0, totalCostEur: 0 };
@@ -182,6 +208,8 @@ export function calculateAverageBuyPrices(
         }
     }
 
-    info(`[Calculations] Calculated average buy prices for ${Object.keys(result).length} assets.`);
+    info(
+        `[Calculations] Calculated average buy prices for ${Object.keys(result).length} assets.`
+    );
     return result;
 }
