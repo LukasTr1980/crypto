@@ -1,4 +1,5 @@
 import axios from 'axios';
+import PQueue from 'p-queue';
 import dotenv from 'dotenv';
 import { sha256, sha512 } from '@noble/hashes/sha2';
 import { hmac } from '@noble/hashes/hmac';
@@ -11,6 +12,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const API_URL = 'https://api.kraken.com';
+const privateQueue = new PQueue({ concurrency: 1 });
 
 const KEY = process.env.KRAKEN_API_KEY;
 const SECRET = process.env.KRAKEN_API_SECRET;
@@ -33,7 +35,7 @@ function sign(path: string, params: URLSearchParams, secretB64: string): string 
     return base64.encode(sig);
 }
 
-export async function krakenPost(path: string, params: URLSearchParams): Promise<any> {
+async function doKrakenPost(path: string, params: URLSearchParams): Promise<any> {
     const headers = {
         "API-Key": KEY,
         "API-Sign": sign(path, params, SECRET!),
@@ -47,6 +49,13 @@ export async function krakenPost(path: string, params: URLSearchParams): Promise
         throw new Error(data.error.join(";"));
     }
     return data.result;
+}
+
+export function krakenPost(
+    path: string,
+    params: URLSearchParams
+): Promise <any> {
+    return privateQueue.add(() => doKrakenPost(path, params));
 }
 
 export async function fetchAllLedgers(): Promise<any[]> {
