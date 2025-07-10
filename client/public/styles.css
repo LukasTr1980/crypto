@@ -172,7 +172,7 @@ tfoot td {
     vertical-align: middle;
     user-select: none;
 }
-info::before {
+.info::before {
     content: 'i';
     font-family: inherit;
     font-weight: 700;
