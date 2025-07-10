@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { fmt, fmtEuro } from "./utils/fmt";
 import { dt } from "./utils/dt";
 
@@ -316,6 +316,12 @@ const AverageBuyPriceTable = ({ buyPrices }: { buyPrices: Record<string, Average
     );
 };
 
+const Info: React.FC<{ text: string }> = ({ text }) =>  (
+    <span className="info">
+        <span className="tooltip">{text}</span>
+    </span>
+);
+
 const FundingSummaryTable = (
     { summary }: { summary: Record<string, FundingSummaryStats> }
 ) => {
@@ -332,7 +338,10 @@ const FundingSummaryTable = (
                         <th>Assets</th>
                         <th className="num">Deposits</th>
                         <th className="num">Withdrawals</th>
-                        <th className="num">Net</th>
+                        <th className="num">
+                            Net
+                            <Info text={"Deposits - Withdrawals\n(Without Fees)"} />
+                            </th>
                         <th className="num">Fees</th>
                     </tr>
                 </thead>
