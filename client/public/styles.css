@@ -181,7 +181,7 @@ tfoot td {
     color: var(--accent);
 }
 .info .tooltip {
-    max-width: 240px;
+    max-width: 480px;
     text-align: left;
     visibility: hidden;
     opacity: 0;

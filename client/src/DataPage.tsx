@@ -340,7 +340,11 @@ const FundingSummaryTable = (
                         <th className="num">Withdrawals</th>
                         <th className="num">
                             Net
-                            <Info text={"Deposits - Withdrawals\n(Without Fees)"} />
+                            <Info text={
+                                "Net = Total Deposits - Total Withdrawals\n" +
+                                "Positive: Remaining balance on exchange\n" +
+                                "Fees are listed separately (included in Withdrawals)"
+                                } />
                             </th>
                         <th className="num">Fees</th>
                     </tr>
