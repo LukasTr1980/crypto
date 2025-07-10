@@ -162,21 +162,23 @@ tfoot td {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.2rem;
-    height: 1.2rem;
-    margin-left: 0.4rem;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-left: 0.35rem;
     border: 1.5px solid var(--accent);
     border-radius: 50%;
     background: var(--bg);
     cursor: help;
+    vertical-align: middle;
     user-select: none;
 }
 info::before {
-    content: 'ℹ';
+    content: 'i';
+    font-family: inherit;
+    font-weight: 700;
     font-size: 0.75rem;
     line-height: 1;
     color: var(--accent);
-    font-weight: 700;
 }
 .info .tooltip {
     max-width: 240px;
