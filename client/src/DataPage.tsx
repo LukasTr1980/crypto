@@ -330,7 +330,7 @@ const FundingSummaryTable = (
         return (<section><h2>Deposits / Withdrawals (summed)</h2><p>No Data.</p></section>);
 
     return (
-        <section>
+        <section className="funding-summary">
             <h2>Deposits/Withdrawals</h2>
             <table>
                 <thead>
