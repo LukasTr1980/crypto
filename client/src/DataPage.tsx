@@ -51,6 +51,13 @@ export interface AverageBuyPricesStats {
     averagePriceEur: number;
 }
 
+export interface FundingSummaryStats {
+    totalDeposited: number;
+    totalWithdrawn: number;
+    net: number;
+    fees: number;
+}
+
 export interface AllData {
     accountBalance: Record<string, { balance: string; hold_trade: string }>;
     tradeBalance: TradeBalance;
@@ -59,6 +66,7 @@ export interface AllData {
     calculatedAssets: AssetValue[];
     totalValueEur: number;
     averageBuyPrices: Record<string, AverageBuyPricesStats>;
+    fundingSummary: Record<string, FundingSummaryStats>;
 }
 
 const AssetValueTable = ({ assets }: { assets: AssetValue[] }) => {
@@ -308,6 +316,48 @@ const AverageBuyPriceTable = ({ buyPrices }: { buyPrices: Record<string, Average
     );
 };
 
+const FundingSummaryTable = (
+    { summary }: { summary: Record<string, FundingSummaryStats> }
+) => {
+    const assets = Object.keys(summary);
+    if (!assets.length)
+        return (<section><h2>Deposits / Withdrawals (summed)</h2><p>No Data.</p></section>);
+
+    return (
+        <section>
+            <h2>Deposits/Withdrawals</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Assets</th>
+                        <th className="num">Deposits</th>
+                        <th className="num">Withdrawals</th>
+                        <th className="num">Net</th>
+                        <th className="num">Fees</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {assets.sort().map(asset => {
+                        const s = summary[asset];
+                        const isEur = asset.toUpperCase().includes('EUR');
+                        const fmtNum = (n: number) =>
+                            isEur ? fmtEuro(n, 2) : fmt(n, 8);
+                        return (
+                            <tr key={asset}>
+                                <td>{asset}</td>
+                                <td className="num">{fmtNum(s.totalDeposited)}</td>
+                                <td className="num">{fmtNum(s.totalWithdrawn)}</td>
+                                <td className="num">{fmtNum(s.net)}</td>
+                                <td className="num">{fmtNum(s.fees)}</td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </section>
+    );
+};
+
 export default function DataPage () {
     const [data, setData] = useState<AllData | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -342,6 +392,7 @@ export default function DataPage () {
                 <AssetValueTable assets={data.calculatedAssets} />
                 <AverageBuyPriceTable buyPrices={data.averageBuyPrices} />
                 <BalanceExTable balanceData={data.accountBalance} />
+                <FundingSummaryTable summary={data.fundingSummary} />
                 <TradeBalanceTable tradeBalance={data.tradeBalance} />
                 <TradesHistoryTable tradesHistory={data.tradesHistory} />
                 <LedgersTable ledgers={data.ledgers} />

@@ -21,6 +21,13 @@ export interface AverageBuyPriceStats {
     averagePriceEur: number;
 }
 
+export interface FundingSummaryStats {
+    totalDeposited: number;
+    totalWithdrawn: number;
+    net: number;
+    fees: number;
+}
+
 function usdToEur(prices: Record<string, any>): number | null {
     const pairs = ["EURUSD", "USDEUR", "USDZEUR"];
     for (const p of pairs) {
@@ -221,4 +228,33 @@ export function calculateAverageBuyPrices(
         `[Calculations] Calculated average buy prices for ${Object.keys(result).length} assets.`
     );
     return result;
+}
+
+export function calculateFundingSummary(
+    ledgers: any[]
+): Record<string, FundingSummaryStats> {
+    const summary: Record<string, FundingSummaryStats> = {};
+
+    for (const l of ledgers) {
+        if (l.type !== 'deposit' && l.type !== 'withdrawal') continue;
+
+        const asset = mapKrakenAsset(l.asset);
+        const amount = Math.abs(parseFloat(l.amount));
+        const fee = Math.abs(parseFloat(l.fee) || 0);
+
+        if (!summary[asset]) {
+            summary[asset] = { totalDeposited: 0, totalWithdrawn: 0, net: 0, fees: 0 };
+        }
+
+        if (l.type === 'deposit') summary[asset].totalDeposited += amount;
+        if (l.type === 'withdrawal')summary[asset].totalWithdrawn += amount;
+
+        summary[asset].fees += fee;
+    }
+
+    for (const stats of Object.values(summary)) {
+        stats.net = stats.totalDeposited - stats.totalWithdrawn;
+    }
+
+    return summary;
 }

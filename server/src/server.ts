@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import { info, error } from './utils/logger';
 import { fetchAllLedgers, fetchAllTradesHistory, fetchAccountBalance, fetchTradeBalance, fetchPrices } from './utils/kraken';
-import { calculateAssetsValue, calculateAverageBuyPrices } from './calculations';
+import { calculateAssetsValue, calculateAverageBuyPrices, calculateFundingSummary } from './calculations';
 
 const app = express();
 const port = process.env.PORT ?? 3000;
@@ -20,6 +20,7 @@ app.get('/api/all-data', async (_req, res) => {
         const averageBuyPrices = calculateAverageBuyPrices(tradesHistory, ledgers);
 
         const tradesCount = Object.keys(tradesHistory.trades ?? {}).length;
+        const fundingSummary = calculateFundingSummary(ledgers);
         info(`[Fetched] ${ledgers.length} ledgers, ${tradesCount} trades.`);
 
         res.json({
@@ -29,7 +30,8 @@ app.get('/api/all-data', async (_req, res) => {
             ledgers,
             calculatedAssets: portFolioData.assets,
             totalValueEur: portFolioData.totalValueEur,
-            averageBuyPrices: averageBuyPrices
+            averageBuyPrices: averageBuyPrices,
+            fundingSummary,
         });
         info('[All-Data API] Success');
 
