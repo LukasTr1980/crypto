@@ -67,6 +67,8 @@ export interface AllData {
     totalValueEur: number;
     averageBuyPrices: Record<string, AverageBuyPricesStats>;
     fundingSummary: Record<string, FundingSummaryStats>;
+    cached: boolean;
+    generatedAt: number;
 }
 
 const AssetValueTable = ({ assets }: { assets: AssetValue[] }) => {
@@ -316,7 +318,7 @@ const AverageBuyPriceTable = ({ buyPrices }: { buyPrices: Record<string, Average
     );
 };
 
-const Info: React.FC<{ text: string }> = ({ text }) =>  (
+const Info: React.FC<{ text: string }> = ({ text }) => (
     <span className="info">
         <span className="tooltip">{text}</span>
     </span>
@@ -344,8 +346,8 @@ const FundingSummaryTable = (
                                 "Net = Total Deposits - Total Withdrawals\n" +
                                 "Positive: Remaining balance on exchange\n" +
                                 "Fees are listed separately (included in Withdrawals)"
-                                } />
-                            </th>
+                            } />
+                        </th>
                         <th className="num">Fees</th>
                     </tr>
                 </thead>
@@ -371,11 +373,11 @@ const FundingSummaryTable = (
     );
 };
 
-export default function DataPage () {
+export default function DataPage() {
     const [data, setData] = useState<AllData | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(()=> {
+    useEffect(() => {
         (async () => {
             try {
                 console.info('[DataPage] fetching...');
@@ -384,7 +386,7 @@ export default function DataPage () {
                 setData(await r.json());
             } catch (err) {
                 const message = err instanceof Error ? err.message : String(err);
-                setError(message);                
+                setError(message);
             }
         })();
     }, []);
@@ -399,6 +401,9 @@ export default function DataPage () {
                 <div id="portfolio-balance">
                     <span>Portfolio Balance</span>
                     <div>{fmtEuro(data.totalValueEur)}</div>
+                    <div className={`cache-status ${data.cached ? 'cached' : 'live'}`}>
+                        {data.cached ? 'cached' : 'live'} - {dt(data.generatedAt / 1000)}
+                    </div>
                 </div>
             </header>
             <main id="content">

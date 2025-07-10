@@ -3,38 +3,39 @@ import path from 'path';
 import { info, error } from './utils/logger';
 import { fetchAllLedgers, fetchAllTradesHistory, fetchAccountBalance, fetchTradeBalance, fetchPrices } from './utils/kraken';
 import { calculateAssetsValue, calculateAverageBuyPrices, calculateFundingSummary } from './calculations';
+import { withCache } from './utils/cache';
 
 const app = express();
 const port = process.env.PORT ?? 3000;
 
+const loadAllData = async () => {
+    const ledgers = await fetchAllLedgers();
+    const tradesHistory = await fetchAllTradesHistory();
+    const accountBalance = await fetchAccountBalance();
+    const tradeBalance = await fetchTradeBalance();
+    const prices = await fetchPrices();
+
+    const portfolio = calculateAssetsValue(accountBalance, prices);
+
+    return {
+        accountBalance,
+        tradeBalance,
+        tradesHistory,
+        ledgers,
+        calculatedAssets: portfolio.assets,
+        totalValueEur: portfolio.totalValueEur,
+        averageBuyPrices: calculateAverageBuyPrices(tradesHistory, ledgers),
+        fundingSummary: calculateFundingSummary(ledgers),
+        generatedAt: Date.now(),
+    };
+};
+
+const loadAllDataCached = withCache(180_000, loadAllData);
+
 app.get('/api/all-data', async (_req, res) => {
-    info('GET /api/all-data - Starting data aggregation');
     try {
-        const ledgers = await fetchAllLedgers();
-        const tradesHistory = await fetchAllTradesHistory();
-        const accountBalance = await fetchAccountBalance();
-        const tradeBalance = await fetchTradeBalance();
-        const prices = await fetchPrices();
-
-        const portFolioData = calculateAssetsValue(accountBalance, prices);
-        const averageBuyPrices = calculateAverageBuyPrices(tradesHistory, ledgers);
-
-        const tradesCount = Object.keys(tradesHistory.trades ?? {}).length;
-        const fundingSummary = calculateFundingSummary(ledgers);
-        info(`[Fetched] ${ledgers.length} ledgers, ${tradesCount} trades.`);
-
-        res.json({
-            accountBalance,
-            tradeBalance,
-            tradesHistory,
-            ledgers,
-            calculatedAssets: portFolioData.assets,
-            totalValueEur: portFolioData.totalValueEur,
-            averageBuyPrices: averageBuyPrices,
-            fundingSummary,
-        });
-        info('[All-Data API] Success');
-
+        const data = await loadAllDataCached();
+        res.json(data);
     } catch (err: any) {
         error('[All-Data API] ->', err.message, err.stack);
         res.status(500).json({ error: err.message });
