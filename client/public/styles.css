@@ -153,10 +153,12 @@ tfoot td {
     from {
         transform: rotate(0deg);
     }
+
     to {
         transform: rotate(360deg)
     }
 }
+
 .info {
     position: relative;
     display: inline-flex;
@@ -172,6 +174,7 @@ tfoot td {
     vertical-align: middle;
     user-select: none;
 }
+
 .info::before {
     content: 'i';
     font-family: inherit;
@@ -180,6 +183,7 @@ tfoot td {
     line-height: 1;
     color: var(--accent);
 }
+
 .info .tooltip {
     max-width: 480px;
     min-width: 300px;
@@ -200,10 +204,12 @@ tfoot td {
     z-index: 10;
     transition: opacity 0.2s ease;
 }
+
 .info:hover .tooltip {
     visibility: visible;
     opacity: 1;
 }
+
 .info .tooltip::after {
     content: '';
     position: absolute;
@@ -213,27 +219,115 @@ tfoot td {
     border: 6px solid transparent;
     border-bottom-color: var(--panel);
 }
-.funding-summary table { overflow: visible; }
+
+.funding-summary table {
+    overflow: visible;
+}
+
 #portfolio-balance .cache-status {
     font-size: 0.75rem;
     opacity: 0.7;
     margin-top: 0.2rem;
 }
-#portfolio-balance .cache-status.live { color: var(--accent); }
-#portfolio-balance .cache-status.cached { color: #9da4ad; }
+
+#portfolio-balance .cache-status.live {
+    color: var(--accent);
+}
+
+#portfolio-balance .cache-status.cached {
+    color: #9da4ad;
+}
+
 th.group {
     text-align: center;
     width: auto;
     white-space: nowrap;
 }
+
 td.buy {
     background: #262e36;
 }
+
 td.sell {
     background: #222830;
 }
+
 th.buyHead,
 th.sellHead {
     background: #303a43;
     border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 1024px) {
+    body {
+        align-items: flex-start;
+    }
+    header,
+    #content {
+        max-width: none;
+        width: 100%;
+    }
+    table {
+        width: max-content;
+        min-width: 100%;
+        display: block;
+        overflow-x: auto;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        align-items: flex-start;
+    }
+    header,
+    #content {
+        max-width: none;
+        width: 100%;
+    }
+
+    h1 {
+        margin-bottom: .5rem;
+        font-size: 1.6rem;
+        text-align: left;
+    }
+
+    #portfolio-balance {
+        text-align: left;
+        margin-top: 0;
+    }
+
+    table {
+        width: max-content;
+        min-width: 100%;
+        display: block;
+        overflow-x: auto;
+    }
+
+    th,
+    td {
+        white-space: nowrap;
+        font-size: 0.85rem;
+        padding: 0.4rem 0.6rem;
+    }
+
+    pre {
+        font-size: 0.8rem;
+    }
+}
+@media (max-width: 480px) {
+    body { padding: 1rem 0.5rem; }
+    h1 { font-size: 1.4rem; }
+
+    #portfolio-balance div { font-size: 1.4rem; }
+    #portfolio-balance span { font-size: 0.8rem; }
+
+    .loader {
+        width: 48px;
+        height: 48px;
+        border-width: 5px;
+    }
 }
