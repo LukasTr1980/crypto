@@ -1,6 +1,6 @@
 {
   "name": "crypto",
-  "version": "1.2.7",
+  "private": true,
   "description": "",
   "main": "server.js",
   "scripts": {

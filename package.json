@@ -1,0 +1,9 @@
+{
+    "private": true,
+    "version": "1.2.7",
+    "workspaces": ["client", "server"],
+    "scripts": {
+        "rel:patch": "npm version patch --workspaces --include-workspace-root",
+        "rel:minor": "npm version minor --workspaces --include-workspace-root"
+    }
+}
