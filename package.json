@@ -6,6 +6,10 @@
         "server"
     ],
     "scripts": {
+        "dev": "npm run dev -w server",
+        "dev:server": "npm run dev:server -w server",
+        "dev:client": "npm run dev -w client",
+        
         "rel:patch": "npm version patch --workspaces --include-workspace-root",
         "rel:minor": "npm version minor --workspaces --include-workspace-root"
     }
