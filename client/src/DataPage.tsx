@@ -307,8 +307,8 @@ const AveragePriceTable = (
                 <thead>
                     <tr>
                         <th rowSpan={2}>Asset</th>
-                        <th colSpan={3} className="num">Buys</th>
-                        <th colSpan={3} className="num">Sells</th>
+                        <th colSpan={3} className="group buyHead">Buys</th>
+                        <th colSpan={3} className="group sellHead">Sells</th>
                     </tr>
                     <tr>
                         <th className="num">Vol</th>
@@ -326,12 +326,12 @@ const AveragePriceTable = (
                         return (
                             <tr key={asset}>
                                 <td>{asset}</td>
-                                <td className="num">{buy ? num(buy.totalVolume) : '-'}</td>
-                                <td className="num">{buy ? fmtEuro(buy.totalCostEur) : '-'}</td>
-                                <td className="num">{buy ? fmtEuro(buy.averagePriceEur) : '-'}</td>
-                                <td className="num">{sell ? num(sell.totalVolume) : '-'}</td>
-                                <td className="num">{sell ? num(sell.totalRevenueEur) : '-'}</td>
-                                <td className="num">{sell ? num(sell.averagePriceEur) : '-'}</td>
+                                <td className="num buy">{buy ? num(buy.totalVolume) : '-'}</td>
+                                <td className="num buy">{buy ? fmtEuro(buy.totalCostEur) : '-'}</td>
+                                <td className="num buy">{buy ? fmtEuro(buy.averagePriceEur) : '-'}</td>
+                                <td className="num sell">{sell ? num(sell.totalVolume) : '-'}</td>
+                                <td className="num sell">{sell ? fmtEuro(sell.totalRevenueEur) : '-'}</td>
+                                <td className="num sell">{sell ? fmtEuro(sell.averagePriceEur) : '-'}</td>
                             </tr>
                         );
                     })}

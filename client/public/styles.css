@@ -116,7 +116,7 @@ th.num,
 td.num {
     text-align: right;
     font-variant-numeric: tabular-nums;
-    width: 8ch;
+    min-width: 8ch;
 }
 
 tbody tr:nth-child(odd) {
@@ -221,3 +221,19 @@ tfoot td {
 }
 #portfolio-balance .cache-status.live { color: var(--accent); }
 #portfolio-balance .cache-status.cached { color: #9da4ad; }
+th.group {
+    text-align: center;
+    width: auto;
+    white-space: nowrap;
+}
+td.buy {
+    background: #262e36;
+}
+td.sell {
+    background: #222830;
+}
+th.buyHead,
+th.sellHead {
+    background: #303a43;
+    border-bottom: 1px solid var(--border);
+}
