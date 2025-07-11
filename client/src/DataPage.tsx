@@ -58,6 +58,12 @@ export interface FundingSummaryStats {
     fees: number;
 }
 
+export interface AverageSellPricesStats {
+    totalVolume: number;
+    totalRevenueEur: number;
+    averagePriceEur: number;
+}
+
 export interface AllData {
     accountBalance: Record<string, { balance: string; hold_trade: string }>;
     tradeBalance: TradeBalance;
@@ -66,6 +72,7 @@ export interface AllData {
     calculatedAssets: AssetValue[];
     totalValueEur: number;
     averageBuyPrices: Record<string, AverageBuyPricesStats>;
+    averageSellPrices: Record<string, AverageSellPricesStats>;
     fundingSummary: Record<string, FundingSummaryStats>;
     cached: boolean;
     generatedAt: number;
@@ -277,38 +284,54 @@ const LedgersTable = ({ ledgers }: { ledgers: Ledger[] }) => {
     );
 };
 
-const AverageBuyPriceTable = ({ buyPrices }: { buyPrices: Record<string, AverageBuyPricesStats> }) => {
-    const assets = Object.keys(buyPrices);
-    if (assets.length === 0) {
-        return (
-            <section>
-                <h2>Average Buy Prices</h2>
-                <p>No EUR-based buy trades found to calculate averages.</p>
-            </section>
-        );
+const AveragePriceTable = (
+    { buyPrices, sellPrices }: {
+        buyPrices: Record<string, AverageBuyPricesStats>,
+        sellPrices: Record<string, AverageSellPricesStats>
     }
+) => {
+    const assets = Array.from(
+        new Set([...Object.keys(buyPrices), ...Object.keys(sellPrices)])
+    ).sort();
+
+    if (!assets.length) return (
+        <section><h2>Average Buy / Sell Prices</h2><p>No EUR-trades available</p></section>
+    );
+
+    const num = (n: number, d = 8) => fmt(n, d);
 
     return (
         <section>
-            <h2>Average Buy Prices (vs. EUR)</h2>
+            <h2>Average Buy / Sell Prices (vs. EUR)</h2>
             <table>
                 <thead>
                     <tr>
-                        <th>Asset</th>
-                        <th className="num">Total Volume bought</th>
-                        <th className="num">Total Cost (€)</th>
-                        <th className="num">Average Buy Price (€)</th>
+                        <th rowSpan={2}>Asset</th>
+                        <th colSpan={3} className="num">Buys</th>
+                        <th colSpan={3} className="num">Sells</th>
+                    </tr>
+                    <tr>
+                        <th className="num">Vol</th>
+                        <th className="num">Cost</th>
+                        <th className="num">Avg €</th>
+                        <th className="num">Vol</th>
+                        <th className="num">Revenue</th>
+                        <th className="num">Avg €</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {assets.sort().map(asset => {
-                        const stats = buyPrices[asset];
+                    {assets.map(asset => {
+                        const buy = buyPrices[asset];
+                        const sell = sellPrices[asset];
                         return (
                             <tr key={asset}>
                                 <td>{asset}</td>
-                                <td className="num">{fmt(stats.totalVolume, 8)}</td>
-                                <td className="num">{fmtEuro(stats.totalCostEur)}</td>
-                                <td className="num">{fmtEuro(stats.averagePriceEur)}</td>
+                                <td className="num">{buy ? num(buy.totalVolume) : '-'}</td>
+                                <td className="num">{buy ? fmtEuro(buy.totalCostEur) : '-'}</td>
+                                <td className="num">{buy ? fmtEuro(buy.averagePriceEur) : '-'}</td>
+                                <td className="num">{sell ? num(sell.totalVolume) : '-'}</td>
+                                <td className="num">{sell ? num(sell.totalRevenueEur) : '-'}</td>
+                                <td className="num">{sell ? num(sell.averagePriceEur) : '-'}</td>
                             </tr>
                         );
                     })}
@@ -333,7 +356,7 @@ const FundingSummaryTable = (
 
     return (
         <section className="funding-summary">
-            <h2>Deposits/Withdrawals</h2>
+            <h2>Deposits / Withdrawals</h2>
             <table>
                 <thead>
                     <tr>
@@ -345,6 +368,7 @@ const FundingSummaryTable = (
                             <Info text={
                                 "Net = Total Deposits - Total Withdrawals\n" +
                                 "Positive: Remaining balance on exchange\n" +
+                                "Negative: Net surplus withdrawn\n" +
                                 "Fees are listed separately (included in Withdrawals)"
                             } />
                         </th>
@@ -408,7 +432,7 @@ export default function DataPage() {
             </header>
             <main id="content">
                 <AssetValueTable assets={data.calculatedAssets} />
-                <AverageBuyPriceTable buyPrices={data.averageBuyPrices} />
+                <AveragePriceTable buyPrices={data.averageBuyPrices} sellPrices={data.averageSellPrices} />
                 <BalanceExTable balanceData={data.accountBalance} />
                 <FundingSummaryTable summary={data.fundingSummary} />
                 <TradeBalanceTable tradeBalance={data.tradeBalance} />

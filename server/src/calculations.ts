@@ -28,6 +28,12 @@ export interface FundingSummaryStats {
     fees: number;
 }
 
+export interface AverageSellPriceStats {
+    totalVolume: number;
+    totalRevenueEur: number;
+    averagePriceEur: number;
+}
+
 function usdToEur(prices: Record<string, any>): number | null {
     const pairs = ["EURUSD", "USDEUR", "USDZEUR"];
     for (const p of pairs) {
@@ -257,4 +263,42 @@ export function calculateFundingSummary(
     }
 
     return summary;
+}
+
+export function calculateAverageSellPrices(
+    tradesHistory: { trades: Record<string, any> }
+): Record<string, AverageSellPriceStats> {
+    info('[Calculations] Calculating average sell prices...');
+
+    const stats: Record<string, { totalVolume: number; totalRevenueEur: number }> = {};
+
+    for (const trade of Object.values(tradesHistory.trades)) {
+        if (trade.type !== 'sell' || !trade.pair.toUpperCase().endsWith('EUR')) continue;
+
+        const assetCode = trade.pair.toUpperCase().replace('EUR', '').replace('Z', '');
+        const asset = mapKrakenAsset(assetCode);
+
+        const volume = parseFloat(trade.vol);
+        const revenue= parseFloat(trade.cost);
+
+        if (!stats[asset]) stats[asset] = { totalVolume: 0, totalRevenueEur: 0 };
+
+        stats[asset].totalVolume += volume;
+        stats[asset].totalRevenueEur += revenue;
+    }
+
+    const result: Record<string, AverageSellPriceStats> = {};
+    for (const asset in stats) {
+        const { totalVolume, totalRevenueEur } = stats[asset];
+        if (totalVolume > 0) {
+            result[asset] = {
+                totalVolume,
+                totalRevenueEur,
+                averagePriceEur: totalRevenueEur / totalVolume,
+            };
+        }
+    }
+
+    info(`[Calculations] Calculated average sell prices for ${Object.keys(result).length} assets.`);
+    return result;
 }
