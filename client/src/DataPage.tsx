@@ -48,6 +48,7 @@ export type Trade = {
 export interface AverageBuyPricesStats {
     totalVolume: number;
     totalCostEur: number;
+    totalFeesEur: number;
     averagePriceEur: number;
 }
 
@@ -61,6 +62,7 @@ export interface FundingSummaryStats {
 export interface AverageSellPricesStats {
     totalVolume: number;
     totalRevenueEur: number;
+    totalFeesEur: number;
     averagePriceEur: number;
 }
 
@@ -307,15 +309,17 @@ const AveragePriceTable = (
                 <thead>
                     <tr>
                         <th rowSpan={2}>Asset</th>
-                        <th colSpan={3} className="group buyHead">Buys</th>
-                        <th colSpan={3} className="group sellHead">Sells</th>
+                        <th colSpan={4} className="group buyHead">Buys</th>
+                        <th colSpan={4} className="group sellHead">Sells</th>
                     </tr>
                     <tr>
                         <th className="num">Vol</th>
                         <th className="num">Cost</th>
+                        <th className="num">Fees</th>
                         <th className="num">Avg €</th>
                         <th className="num">Vol</th>
                         <th className="num">Revenue</th>
+                        <th className="num">Fees</th>
                         <th className="num">Avg €</th>
                     </tr>
                 </thead>
@@ -328,9 +332,11 @@ const AveragePriceTable = (
                                 <td>{asset}</td>
                                 <td className="num buy">{buy ? num(buy.totalVolume) : '-'}</td>
                                 <td className="num buy">{buy ? fmtEuro(buy.totalCostEur) : '-'}</td>
+                                <td className="num buy">{buy ? fmtEuro(buy.totalFeesEur) : '-'}</td>
                                 <td className="num buy">{buy ? fmtEuro(buy.averagePriceEur) : '-'}</td>
                                 <td className="num sell">{sell ? num(sell.totalVolume) : '-'}</td>
                                 <td className="num sell">{sell ? fmtEuro(sell.totalRevenueEur) : '-'}</td>
+                                <td className="num sell">{sell ? fmtEuro(sell.totalFeesEur) : '-'}</td>
                                 <td className="num sell">{sell ? fmtEuro(sell.averagePriceEur) : '-'}</td>
                             </tr>
                         );

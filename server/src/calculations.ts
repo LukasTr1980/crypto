@@ -18,6 +18,7 @@ export interface CalculatedPortfolio {
 export interface AverageBuyPriceStats {
     totalVolume: number;
     totalCostEur: number;
+    totalFeesEur: number;
     averagePriceEur: number;
 }
 
@@ -31,6 +32,7 @@ export interface FundingSummaryStats {
 export interface AverageSellPriceStats {
     totalVolume: number;
     totalRevenueEur: number;
+    totalFeesEur: number;
     averagePriceEur: number;
 }
 
@@ -160,7 +162,7 @@ export function calculateAverageBuyPrices(
     ledgers: any[]
 ): Record<string, AverageBuyPriceStats> {
     info("[Calculations] Calculating average buy prices...");
-    const stats: Record<string, { totalVolume: number; totalCostEur: number }> = {};
+    const stats: Record<string, { totalVolume: number; totalCostEur: number; totalFeesEur: number }> = {};
 
     for (const trade of Object.values(tradesHistory.trades)) {
         if (trade.type !== "buy" || !trade.pair.toUpperCase().endsWith("EUR")) {
@@ -172,13 +174,15 @@ export function calculateAverageBuyPrices(
 
         const volume = parseFloat(trade.vol);
         const cost = parseFloat(trade.cost);
+        const fee = parseFloat(trade.fee);
 
         if (!stats[asset]) {
-            stats[asset] = { totalVolume: 0, totalCostEur: 0 };
+            stats[asset] = { totalVolume: 0, totalCostEur: 0, totalFeesEur: 0 };
         }
 
         stats[asset].totalVolume += volume;
         stats[asset].totalCostEur += cost;
+        stats[asset].totalFeesEur += fee;
     }
 
     const groupedByRefId: Record<string, any[]> = {};
@@ -204,27 +208,30 @@ export function calculateAverageBuyPrices(
             const asset = mapKrakenAsset(cryptoReceive.asset);
             const volume = parseFloat(cryptoReceive.amount);
             const cost = Math.abs(parseFloat(eurSpend.amount));
+            const fee = 0; // Instant Buy Kraken abo no fees
 
             info(
                 `[Calculations] Found instant buy via ledger for ${asset}: ${volume} for €${cost}`
             );
 
             if (!stats[asset]) {
-                stats[asset] = { totalVolume: 0, totalCostEur: 0 };
+                stats[asset] = { totalVolume: 0, totalCostEur: 0, totalFeesEur: 0 };
             }
 
             stats[asset].totalVolume += volume;
             stats[asset].totalCostEur += cost;
+            stats[asset].totalFeesEur += fee;
         }
     }
 
     const result: Record<string, AverageBuyPriceStats> = {};
     for (const asset in stats) {
-        const { totalVolume, totalCostEur } = stats[asset];
+        const { totalVolume, totalCostEur, totalFeesEur } = stats[asset];
         if (totalVolume > 0) {
             result[asset] = {
                 totalVolume,
                 totalCostEur,
+                totalFeesEur,
                 averagePriceEur: totalCostEur / totalVolume,
             };
         }
@@ -270,7 +277,7 @@ export function calculateAverageSellPrices(
 ): Record<string, AverageSellPriceStats> {
     info('[Calculations] Calculating average sell prices...');
 
-    const stats: Record<string, { totalVolume: number; totalRevenueEur: number }> = {};
+    const stats: Record<string, { totalVolume: number; totalRevenueEur: number; totalFeesEur: number }> = {};
 
     for (const trade of Object.values(tradesHistory.trades)) {
         if (trade.type !== 'sell' || !trade.pair.toUpperCase().endsWith('EUR')) continue;
@@ -279,21 +286,24 @@ export function calculateAverageSellPrices(
         const asset = mapKrakenAsset(assetCode);
 
         const volume = parseFloat(trade.vol);
-        const revenue= parseFloat(trade.cost);
+        const revenue = parseFloat(trade.cost);
+        const fee = parseFloat(trade.fee);
 
-        if (!stats[asset]) stats[asset] = { totalVolume: 0, totalRevenueEur: 0 };
+        if (!stats[asset]) stats[asset] = { totalVolume: 0, totalRevenueEur: 0, totalFeesEur: 0 };
 
         stats[asset].totalVolume += volume;
         stats[asset].totalRevenueEur += revenue;
+        stats[asset].totalFeesEur += fee;
     }
 
     const result: Record<string, AverageSellPriceStats> = {};
     for (const asset in stats) {
-        const { totalVolume, totalRevenueEur } = stats[asset];
+        const { totalVolume, totalRevenueEur, totalFeesEur } = stats[asset];
         if (totalVolume > 0) {
             result[asset] = {
                 totalVolume,
                 totalRevenueEur,
+                totalFeesEur,
                 averagePriceEur: totalRevenueEur / totalVolume,
             };
         }
