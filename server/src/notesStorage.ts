@@ -1,7 +1,12 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-const NOTES_FILE = path.join(__dirname, '..', 'notes.json');
+const DATA_DIR = path.resolve(
+    process.env.DATA_DIR ?? '/data'
+);
+
+const NOTES_FILE =
+    process.env.NOTES_FILE || path.join(DATA_DIR , 'notes.json');
 
 export async function readNotes(): Promise<string> {
     try {
@@ -13,6 +18,8 @@ export async function readNotes(): Promise<string> {
 }
 
 export async function writeNotes(text: string) {
+    await fs.mkdir(path.dirname(NOTES_FILE), { recursive: true });
+
     const data = JSON.stringify(
         { text, updatedAt: Date.now() },
         null,

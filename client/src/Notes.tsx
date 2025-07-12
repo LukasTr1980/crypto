@@ -7,6 +7,10 @@ export default function Notes() {
 
     const lastSaved = useRef<string>('');
 
+    const saveTimer = useRef<number | null>(null);
+
+    const hideLabelTimer = useRef<number | number>(null);
+
     useEffect(() => {
         fetch('/api/notes')
             .then(r => r.json())
@@ -20,7 +24,8 @@ export default function Notes() {
     useEffect(() => {
         if (text === lastSaved.current) return;
 
-        const id = window.setTimeout(() => {
+        if (saveTimer.current) window.clearTimeout(saveTimer.current);
+        saveTimer.current = window.setTimeout(() => {
             setStatus('saving');
             fetch('/api/notes', {
                 method: 'POST',
@@ -30,11 +35,20 @@ export default function Notes() {
                 .then(() => {
                     lastSaved.current = text;
                     setStatus('saved');
+
+                    if (hideLabelTimer.current)
+                        window.clearTimeout(hideLabelTimer.current);
+                    hideLabelTimer.current = window.setTimeout(
+                        () => setStatus('idle'),
+                        1500
+                    );
                 })
                 .catch(() => setStatus('error'));
         }, 800);
 
-        return () => clearTimeout(id);
+        return () => {
+            if (saveTimer.current) window.clearTimeout(saveTimer.current);
+        };
     }, [text]);
 
     const label =
