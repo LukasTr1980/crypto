@@ -227,17 +227,20 @@ const TradesHistoryTable = ({ tradesHistory }: { tradesHistory: { trades: Record
                     </tr>
                 </thead>
                 <tbody>
-                    {trades.map(t => (
-                        <tr key={`${t.ordertxid}-${t.time}`}>
-                            <td>{dt(t.time)}</td><td>{t.pair}</td>
-                            <td>{t.type.toUpperCase()}</td><td>{t.ordertype}</td>
-                            <td className="num">{fmtEuro(parseFloat(t.price), 4)}</td>
-                            <td className="num">{fmt(parseFloat(t.vol), 8)}</td>
-                            <td className="num">{fmtEuro(parseFloat(t.cost), 2)}</td>
-                            <td className="num">{fmtEuro(parseFloat(t.fee), 4)}</td>
-                            <td>{t.ordertxid}</td>
-                        </tr>
-                    ))}
+                    {trades.map((t, idx) => {
+                        const base = t.ordertxid || 'no-id';
+                        return (
+                            <tr key={`${base}-${t.time}-${idx}`}>
+                                <td>{dt(t.time)}</td><td>{t.pair}</td>
+                                <td>{t.type.toUpperCase()}</td><td>{t.ordertype}</td>
+                                <td className="num">{fmtEuro(parseFloat(t.price), 4)}</td>
+                                <td className="num">{fmt(parseFloat(t.vol), 8)}</td>
+                                <td className="num">{fmtEuro(parseFloat(t.cost), 2)}</td>
+                                <td className="num">{fmtEuro(parseFloat(t.fee), 4)}</td>
+                                <td>{t.ordertxid}</td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         </section>
@@ -268,10 +271,10 @@ const LedgersTable = ({ ledgers }: { ledgers: Ledger[] }) => {
                     </tr>
                 </thead>
                 <tbody>
-                    {sortedLedgers.map(l => {
+                    {sortedLedgers.map((l, idx) => {
                         const isEur = l.asset.toUpperCase().includes('EUR');
                         return (
-                            <tr key={l.refid}>
+                            <tr key={`${l.refid}-${idx}`}>
                                 <td>{dt(l.time)}</td><td>{l.asset}</td><td>{l.type}</td>
                                 <td>{l.subtype || '-'}</td>
                                 <td className="num">{fmt(parseFloat(l.amount), isEur ? 2 : 8)}</td>
