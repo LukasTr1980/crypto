@@ -4,6 +4,7 @@ import { info, error } from './utils/logger';
 import { fetchAllLedgers, fetchAllTradesHistory, fetchAccountBalance, fetchTradeBalance, fetchPrices } from './utils/kraken';
 import { calculateAssetsValue, calculateAverageBuyPrices, calculateAverageSellPrices, calculateFundingSummary } from './calculations';
 import { withCache } from './utils/cache';
+import { readNotes, writeNotes } from './notesStorage';
 
 const app = express();
 const port = process.env.PORT ?? 3000;
@@ -33,6 +34,8 @@ const loadAllData = async () => {
 
 const loadAllDataCached = withCache(180_000, loadAllData);
 
+app.use(express.json());
+
 app.get('/api/all-data', async (_req, res) => {
     try {
         const data = await loadAllDataCached();
@@ -42,6 +45,16 @@ app.get('/api/all-data', async (_req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+app.get('/api/notes', async (_req, res) => {
+    const text = await readNotes();
+    res.json({ text });
+});
+
+app.post('/api/notes', async (req, res) => {
+    await writeNotes(req.body?.text ?? '');
+    res.status(204).end();
+})
 
 app.use(express.static(path.join(__dirname, '..', '..', 'client', 'dist')));
 

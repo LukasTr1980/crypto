@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fmt, fmtEuro } from "./utils/fmt";
 import { dt } from "./utils/dt";
+import Notes from "./Notes";
 
 export interface AssetValue {
     asset: string;
@@ -439,6 +440,7 @@ export default function DataPage() {
             <main id="content">
                 <AssetValueTable assets={data.calculatedAssets} />
                 <AveragePriceTable buyPrices={data.averageBuyPrices} sellPrices={data.averageSellPrices} />
+                <Notes />
                 <BalanceExTable balanceData={data.accountBalance} />
                 <FundingSummaryTable summary={data.fundingSummary} />
                 <TradeBalanceTable tradeBalance={data.tradeBalance} />

@@ -4,3 +4,5 @@ dist/
 venv/
 public/main.js
 public/main.js.map
+notes.json
+users.json
