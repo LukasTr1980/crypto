@@ -318,11 +318,25 @@ const AveragePriceTable = (
                     </tr>
                     <tr>
                         <th className="num">Vol</th>
-                        <th className="num">Cost</th>
+                        <th className="num">
+                            Cost
+                            <Info text={
+                                "Sum of buy costs (fees included)\n" +
+                                "Formula: (TotalBuyCosts + TotalFees) / TotalVolume"
+                            }
+                            />
+                        </th>
                         <th className="num">Fees</th>
                         <th className="num">Avg €</th>
                         <th className="num">Vol</th>
-                        <th className="num">Revenue</th>
+                        <th className="num">
+                            Revenue
+                            <Info text={
+                                "Sell revenue minus fees\n" +
+                                "Formula: (TotalRevenue - TotalFees) / Totalvolume"
+                            }
+                            />
+                        </th>
                         <th className="num">Fees</th>
                         <th className="num">Avg €</th>
                     </tr>

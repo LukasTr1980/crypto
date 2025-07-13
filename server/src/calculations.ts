@@ -232,7 +232,7 @@ export function calculateAverageBuyPrices(
                 totalVolume,
                 totalCostEur,
                 totalFeesEur,
-                averagePriceEur: totalCostEur / totalVolume,
+                averagePriceEur: (totalCostEur + totalFeesEur) / totalVolume,
             };
         }
     }
@@ -304,7 +304,7 @@ export function calculateAverageSellPrices(
                 totalVolume,
                 totalRevenueEur,
                 totalFeesEur,
-                averagePriceEur: totalRevenueEur / totalVolume,
+                averagePriceEur: (totalRevenueEur - totalFeesEur) / totalVolume,
             };
         }
     }

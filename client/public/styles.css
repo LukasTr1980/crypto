@@ -186,7 +186,7 @@ tfoot td {
 
 .info .tooltip {
     max-width: 480px;
-    min-width: 300px;
+    min-width: 360px;
     text-align: left;
     visibility: hidden;
     opacity: 0;
