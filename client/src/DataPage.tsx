@@ -67,6 +67,13 @@ export interface AverageSellPricesStats {
     averagePriceEur: number;
 }
 
+export interface PnLStats {
+    investedEur: number;
+    realizedEur: number;
+    unrealizedEur: number;
+    totalEur: number;
+    totalPct: number;
+}
 export interface AllData {
     accountBalance: Record<string, { balance: string; hold_trade: string }>;
     tradeBalance: TradeBalance;
@@ -77,6 +84,7 @@ export interface AllData {
     averageBuyPrices: Record<string, AverageBuyPricesStats>;
     averageSellPrices: Record<string, AverageSellPricesStats>;
     fundingSummary: Record<string, FundingSummaryStats>;
+    profitPerAsset: Record<string, PnLStats>;
     cached: boolean;
     generatedAt: number;
 }
@@ -379,7 +387,7 @@ const FundingSummaryTable = (
         return (<section><h2>Deposits / Withdrawals (summed)</h2><p>No Data.</p></section>);
 
     return (
-        <section className="funding-summary">
+        <section>
             <h2>Deposits / Withdrawals</h2>
             <table>
                 <thead>
@@ -412,6 +420,65 @@ const FundingSummaryTable = (
                                 <td className="num">{fmtNum(s.totalWithdrawn)}</td>
                                 <td className="num">{fmtNum(s.net)}</td>
                                 <td className="num">{fmtNum(s.fees)}</td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </section>
+    );
+};
+
+const ProfitTable = ({ stats }: { stats: Record<string, PnLStats> }) => {
+    const assets = Object.keys(stats).sort();
+    if (!assets.length) return null;
+
+    const cls = (v: number) => (v >= 0 ? 'gain' : 'loss');
+
+    return (
+        <section>
+            <h2>Realized / Unrealized per Coin</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th className="num">
+                            Invested
+                            <Info text={"Buys – Sells (net cash flow)"} />
+                            </th>
+                        <th className="num">
+                            Realized
+                            <Info text={"Gain / Loss on SOLD Coins"} />
+                            </th>
+                        <th className="num">
+                            Unrealized
+                            <Info text={
+                                "Market value of current coins – cost basis\n" +
+                                "Cost basis = current balance × avg. buy price"
+                            }
+                            />
+                            </th>
+                        <th className="num">
+                            Total
+                            <Info text={"Realized + Unrealized"} />
+                            </th>
+                        <th className="num">
+                            Total %
+                            <Info text={"Total / Invested"} />
+                            </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {assets.map(a => {
+                        const s = stats[a];
+                        return (
+                            <tr key={a}>
+                                <td>{a}</td>
+                                <td className="num">{fmtEuro(s.investedEur)}</td>
+                                <td className={`num ${cls(s.realizedEur)}`}>{fmtEuro(s.realizedEur)}</td>
+                                <td className={`num ${cls(s.unrealizedEur)}`}>{fmtEuro(s.unrealizedEur)}</td>
+                                <td className={`num ${cls(s.totalEur)}`}>{fmtEuro(s.totalEur)}</td>
+                                <td className={`num ${cls(s.totalPct)}`}>{fmt(s.totalPct, 2)} %</td>
                             </tr>
                         );
                     })}
@@ -456,6 +523,7 @@ export default function DataPage() {
             </header>
             <main id="content">
                 <AssetValueTable assets={data.calculatedAssets} />
+                <ProfitTable stats={data.profitPerAsset} />
                 <AveragePriceTable buyPrices={data.averageBuyPrices} sellPrices={data.averageSellPrices} />
                 <Notes />
                 <BalanceExTable balanceData={data.accountBalance} />

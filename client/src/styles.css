@@ -92,7 +92,7 @@ table {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    overflow: hidden;
+    overflow: visible;
 }
 
 thead {
@@ -218,10 +218,6 @@ tfoot td {
     transform: translateX(-50%);
     border: 6px solid transparent;
     border-bottom-color: var(--panel);
-}
-
-.funding-summary table {
-    overflow: visible;
 }
 
 #portfolio-balance .cache-status {
