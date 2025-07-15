@@ -36,6 +36,14 @@ export interface AverageSellPriceStats {
     averagePriceEur: number;
 }
 
+export interface PnlStats {
+    investedEur: number;
+    realizedEur: number;
+    unrealizedEur: number;
+    totalEur: number;
+    totalPct: number;
+}
+
 function usdToEur(prices: Record<string, any>): number | null {
     const pairs = ["EURUSD", "USDEUR", "USDZEUR"];
     for (const p of pairs) {
@@ -310,5 +318,68 @@ export function calculateAverageSellPrices(
     }
 
     info(`[Calculations] Calculated average sell prices for ${Object.keys(result).length} assets.`);
+    return result;
+}
+
+export function calculatePnlPerAsset(
+    account: Record<string, { balance: string }>,
+    tradesHistory: { trades: Record<string, any> },
+    ledgers: any[],
+    prices: Record<string, any>
+): Record<string, PnlStats> {
+    const buyStats = calculateAverageBuyPrices(tradesHistory, ledgers);
+    const sellStats = calculateAverageSellPrices(tradesHistory);
+    const portfolio = calculateAssetsValue(account, prices);
+
+    const currentValue: Record<string, { bal: number; valEur: number; price: number }> = {};
+    portfolio.assets.forEach(a => {
+        currentValue[a.asset] = { bal: a.balance, valEur: a.eurValue, price: a.priceInEur };
+    });
+
+    const allAssets = new Set<string>([
+        ...Object.keys(buyStats),
+        ...Object.keys(sellStats),
+        ...portfolio.assets.map(a => a.asset),
+    ]);
+
+    const result: Record<string, PnlStats> = {};
+
+    for (const asset of allAssets) {
+        const buy : AverageBuyPriceStats | undefined = buyStats[asset];
+        const sell: AverageSellPriceStats | undefined = sellStats[asset];
+        const cur = currentValue[asset] ?? { bal: 0, valEur: 0, price: 0 };
+
+        const netBuys = (buy?.totalCostEur ?? 0) + (buy?.totalFeesEur ?? 0);
+        const netSells = (sell?.totalRevenueEur ?? 0) - (sell?.totalFeesEur ?? 0);
+        const investedEur = netBuys - netSells;
+
+        let realizedEur = 0;
+        if (sell) {
+            const avgBuyPrice = buy?.averagePriceEur ?? 0;
+            const costBasisSold = avgBuyPrice * sell.totalVolume;
+            realizedEur =
+                sell.totalRevenueEur -
+                sell.totalFeesEur -
+                costBasisSold;
+        }
+
+        const avgBuyPrice = buy?.averagePriceEur ?? 0;
+        const costBasisRemaining = avgBuyPrice * cur.bal;
+        const unrealizedEur = cur.valEur - costBasisRemaining;
+
+        const totalEur = realizedEur + unrealizedEur;
+
+        const totalPct =
+            investedEur !== 0 ? (totalEur / Math.abs(investedEur)) * 100 : 0;
+
+        result[asset] = {
+            investedEur,
+            realizedEur,
+            unrealizedEur,
+            totalEur,
+            totalPct,
+        };
+    }
+
     return result;
 }

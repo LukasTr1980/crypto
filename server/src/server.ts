@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import { info, error } from './utils/logger';
 import { fetchAllLedgers, fetchAllTradesHistory, fetchAccountBalance, fetchTradeBalance, fetchPrices } from './utils/kraken';
-import { calculateAssetsValue, calculateAverageBuyPrices, calculateAverageSellPrices, calculateFundingSummary } from './calculations';
+import { calculateAssetsValue, calculateAverageBuyPrices, calculateAverageSellPrices, calculateFundingSummary, calculatePnlPerAsset } from './calculations';
 import { withCache } from './utils/cache';
 import { readNotes, writeNotes } from './notesStorage';
 
@@ -15,8 +15,8 @@ const loadAllData = async () => {
     const accountBalance = await fetchAccountBalance();
     const tradeBalance = await fetchTradeBalance();
     const prices = await fetchPrices();
-
     const portfolio = calculateAssetsValue(accountBalance, prices);
+    const pnlPerAsset = calculatePnlPerAsset(accountBalance, tradesHistory, ledgers, prices);
 
     return {
         accountBalance,
@@ -28,6 +28,7 @@ const loadAllData = async () => {
         averageBuyPrices: calculateAverageBuyPrices(tradesHistory, ledgers),
         averageSellPrices: calculateAverageSellPrices(tradesHistory), // No instant sell, no ledger
         fundingSummary: calculateFundingSummary(ledgers),
+        profitPerAsset: pnlPerAsset,
         generatedAt: Date.now(),
     };
 };
