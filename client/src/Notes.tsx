@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { apiUrl } from "./utils/api";
 
 export default function Notes() {
     const [text, setText] = useState('');
@@ -12,7 +13,7 @@ export default function Notes() {
     const hideLabelTimer = useRef<number | number>(null);
 
     useEffect(() => {
-        fetch('/api/notes')
+        fetch(apiUrl('notes'))
             .then(r => r.json())
             .then(({ text }) => {
                 setText(text);
@@ -27,7 +28,7 @@ export default function Notes() {
         if (saveTimer.current) window.clearTimeout(saveTimer.current);
         saveTimer.current = window.setTimeout(() => {
             setStatus('saving');
-            fetch('/api/notes', {
+            fetch(apiUrl('notes'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text }),

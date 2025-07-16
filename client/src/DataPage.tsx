@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { fmt, fmtEuro } from "./utils/fmt";
 import { dt } from "./utils/dt";
 import Notes from "./Notes";
+import { apiUrl } from "./utils/api";
 
 export interface AssetValue {
     asset: string;
@@ -496,7 +497,7 @@ export default function DataPage() {
         (async () => {
             try {
                 console.info('[DataPage] fetching...');
-                const r = await fetch('/api/all-data');
+                const r = await fetch(apiUrl('all-data'));
                 if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
                 setData(await r.json());
             } catch (err) {
