@@ -1,6 +1,5 @@
 FROM node:22-bookworm AS base
 WORKDIR /workspace
-RUN corepack enable && corepack prepare npm@11.4.2 --activate
 
 FROM base AS deps
 COPY package*.json ./
@@ -18,7 +17,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY package*.json ./
 COPY server/package.json server/
-RUN npm ci --omit=dev --workspace=server
+RUN npm ci --omit=dev --workspace=server --ignore-scripts && npm cache clean --force
 COPY --from=build /workspace/server/dist ./server/dist
 COPY --from=build /workspace/client/dist ./client/dist
 COPY --from=build /workspace/client/public ./public
