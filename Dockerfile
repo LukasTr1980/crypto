@@ -1,9 +1,10 @@
 FROM node:22-bookworm AS deps
 WORKDIR /workspace
+RUN corepack enable && corepack prepare npm@11.4.2 --activate
 COPY package*.json ./
 COPY client/package.json client/
 COPY server/package.json server/
-RUN npm ci --workspaces --include-workspace-root --install-strategy=nested
+RUN npm ci --workspaces --include-workspace-root
 
 FROM node:22-bookworm AS builder
 WORKDIR /workspace
