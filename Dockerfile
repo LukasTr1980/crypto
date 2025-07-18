@@ -19,9 +19,9 @@ ENV NODE_ENV=production
 COPY package*.json ./
 COPY server/package.json server/
 RUN npm ci --omit=dev --workspace=server
-COPY --from=builder /workspace/server/dist ./server/dist
-COPY --from=builder /workspace/client/dist ./client/dist
-COPY --from=builder /workspace/client/public ./public
+COPY --from=build /workspace/server/dist ./server/dist
+COPY --from=build /workspace/client/dist ./client/dist
+COPY --from=build /workspace/client/public ./public
 
 COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/
 EXPOSE 3000
