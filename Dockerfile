@@ -3,7 +3,7 @@ WORKDIR /workspace
 COPY package*.json ./
 COPY client/package.json client/
 COPY server/package.json server/
-RUN npm ci --ignore-scripts
+RUN npm ci --workspaces --include-workspace-root
 
 FROM node:22-bookworm AS builder
 WORKDIR /workspace
@@ -17,7 +17,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY package*.json ./
 COPY server/package.json server/
-RUN npm ci --omit=dev --workspace=server --ignore-scripts
+RUN npm ci --omit=dev --workspace=server
 COPY --from=builder /workspace/server/dist ./server/dist
 COPY --from=builder /workspace/client/dist ./client/dist
 COPY --from=builder /workspace/client/public ./public
