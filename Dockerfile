@@ -1,14 +1,14 @@
-FROM node:22-bookworm AS deps
+FROM node:22-bookworm AS base
 WORKDIR /workspace
 RUN corepack enable && corepack prepare npm@11.4.2 --activate
+
+FROM base AS deps
 COPY package*.json ./
 COPY client/package.json client/
 COPY server/package.json server/
 RUN npm ci --workspaces --include-workspace-root
 
-FROM node:22-bookworm AS builder
-WORKDIR /workspace
-COPY --from=deps /workspace ./
+FROM deps AS build
 COPY . .
 RUN npm run build -w client
 RUN npm run build -w server
