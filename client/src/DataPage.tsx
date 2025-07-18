@@ -68,7 +68,7 @@ export interface AverageSellPricesStats {
     averagePriceEur: number;
 }
 
-export interface PnLStats {
+export interface PnlStats {
     investedEur: number;
     realizedEur: number;
     unrealizedEur: number;
@@ -85,7 +85,8 @@ export interface AllData {
     averageBuyPrices: Record<string, AverageBuyPricesStats>;
     averageSellPrices: Record<string, AverageSellPricesStats>;
     fundingSummary: Record<string, FundingSummaryStats>;
-    profitPerAsset: Record<string, PnLStats>;
+    profitPerAsset: Record<string, PnlStats>;
+    profitTotals: PnlStats;
     cached: boolean;
     generatedAt: number;
 }
@@ -430,7 +431,7 @@ const FundingSummaryTable = (
     );
 };
 
-const ProfitTable = ({ stats }: { stats: Record<string, PnLStats> }) => {
+const ProfitTable = ({ stats, totals }: { stats: Record<string, PnlStats>, totals: PnlStats }) => {
     const assets = Object.keys(stats).sort();
     if (!assets.length) return null;
 
@@ -484,6 +485,16 @@ const ProfitTable = ({ stats }: { stats: Record<string, PnLStats> }) => {
                         );
                     })}
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <td><strong>Total</strong></td>
+                        <td className="num"><strong>{fmtEuro(totals.investedEur)}</strong></td>
+                        <td className={`num ${cls(totals.realizedEur)}`}><strong>{fmtEuro(totals.realizedEur)}</strong></td>
+                        <td className={`num ${cls(totals.unrealizedEur)}`}><strong>{fmtEuro(totals.unrealizedEur)}</strong></td>
+                        <td className={`num ${cls(totals.totalEur)}`}><strong>{fmtEuro(totals.totalEur)}</strong></td>
+                        <td className={`num ${cls(totals.totalPct)}`}><strong>{fmt(totals.totalPct, 2)} %</strong></td>
+                    </tr>
+                </tfoot>
             </table>
         </section>
     );
@@ -524,7 +535,7 @@ export default function DataPage() {
             </header>
             <main id="content">
                 <AssetValueTable assets={data.calculatedAssets} />
-                <ProfitTable stats={data.profitPerAsset} />
+                <ProfitTable stats={data.profitPerAsset} totals={data.profitTotals} />
                 <AveragePriceTable buyPrices={data.averageBuyPrices} sellPrices={data.averageSellPrices} />
                 <Notes />
                 <BalanceExTable balanceData={data.accountBalance} />

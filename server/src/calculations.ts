@@ -44,6 +44,11 @@ export interface PnlStats {
     totalPct: number;
 }
 
+export interface PnlPerAssetResult {
+    perAsset: Record<string, PnlStats>;
+    totals: PnlStats;
+}
+
 function usdToEur(prices: Record<string, any>): number | null {
     const pairs = ["EURUSD", "USDEUR", "USDZEUR"];
     for (const p of pairs) {
@@ -326,7 +331,7 @@ export function calculatePnlPerAsset(
     tradesHistory: { trades: Record<string, any> },
     ledgers: any[],
     prices: Record<string, any>
-): Record<string, PnlStats> {
+): PnlPerAssetResult {
     const buyStats = calculateAverageBuyPrices(tradesHistory, ledgers);
     const sellStats = calculateAverageSellPrices(tradesHistory);
     const portfolio = calculateAssetsValue(account, prices);
@@ -342,7 +347,7 @@ export function calculatePnlPerAsset(
         ...portfolio.assets.map(a => a.asset),
     ]);
 
-    const result: Record<string, PnlStats> = {};
+    const perAsset: Record<string, PnlStats> = {};
 
     for (const asset of allAssets) {
         const buy : AverageBuyPriceStats | undefined = buyStats[asset];
@@ -372,7 +377,7 @@ export function calculatePnlPerAsset(
         const totalPct =
             investedEur !== 0 ? (totalEur / Math.abs(investedEur)) * 100 : 0;
 
-        result[asset] = {
+        perAsset[asset] = {
             investedEur,
             realizedEur,
             unrealizedEur,
@@ -381,5 +386,24 @@ export function calculatePnlPerAsset(
         };
     }
 
-    return result;
+    let sumInv = 0, sumReal = 0, sumUnreal = 0;
+    Object.values(perAsset).forEach(p => {
+        sumInv += p.investedEur;
+        sumReal += p.realizedEur;
+        sumUnreal += p.unrealizedEur;
+    });
+
+    const sumTot = sumReal + sumUnreal;
+    const sumPct = sumInv !== 0 ? (sumTot / Math.abs(sumInv)) * 100 : 0;
+
+    return {
+        perAsset,
+        totals: {
+            investedEur: sumInv,
+            realizedEur: sumReal,
+            unrealizedEur: sumUnreal,
+            totalEur: sumTot,
+            totalPct: sumPct,
+        },
+    };
 }

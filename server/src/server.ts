@@ -16,7 +16,7 @@ const loadAllData = async () => {
     const tradeBalance = await fetchTradeBalance();
     const prices = await fetchPrices();
     const portfolio = calculateAssetsValue(accountBalance, prices);
-    const pnlPerAsset = calculatePnlPerAsset(accountBalance, tradesHistory, ledgers, prices);
+    const { perAsset: pnlPerAsset, totals: pnlTotals } = calculatePnlPerAsset(accountBalance, tradesHistory, ledgers, prices);
 
     return {
         accountBalance,
@@ -29,6 +29,7 @@ const loadAllData = async () => {
         averageSellPrices: calculateAverageSellPrices(tradesHistory), // No instant sell, no ledger
         fundingSummary: calculateFundingSummary(ledgers),
         profitPerAsset: pnlPerAsset,
+        profitTotals: pnlTotals,
         generatedAt: Date.now(),
     };
 };
