@@ -9,7 +9,6 @@ COPY server/package.json server/
 RUN npm ci --workspaces --include-workspace-root
 
 FROM deps AS build
-ENV ROLLUP_NO_BINARY=true
 COPY . .
 RUN npm run build -w client
 RUN npm run build -w server
