@@ -1,0 +1,47 @@
+name: Build & Push Crypto Image
+
+on:
+    push:
+        tags:
+            - 'v*'
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Read version from package.json
+              id: pkg
+              run: echo "version=$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
+
+            - name: Validate tag vs package.json
+              run: |
+                TAG_VERSION="${GITHUB_REF_NAME#v}"
+                PKG_VERSION="${{ steps.pkg.outputs.version }}"
+                if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+                    echo "X Versions-Mismatch: Tag v$TAG_VERSION != package.json $PKG_VERSION"
+                    exit 1
+                fi
+                echo "Versionsmatch: $PKG_VERSION"
+            - name: Login to registry
+              run: echo "${{ secrets.REGISTRY_PASS }}" | docker login registry.charts.cx -u "${{ secrets.REGISTRY_USER }}" --password-stdin
+
+            - name: Build image
+              run: |
+                VERSION="${{ steps.pkg.outputs.version }}"
+                docker build -t registry.charts.cx/crypto:${VERSION} .
+
+            - name: Push image
+              run: |
+                VERSION="${{ steps.pkg.outputs.version }}"
+                docker push registry.charts.cx/crypto:${VERSION}
+
+            - name: Show digest
+              run: |
+                VERSION="${{ steps.pkg.outputs.version }}"
+                DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' registry.charts.cx/crypto:${VERSION})
+                echo "Image Digest: ${DIGEST}"
+                echo "Digest: \`${DIGEST}\`" >> $GITHUB_STEP_SUMMARY
+
