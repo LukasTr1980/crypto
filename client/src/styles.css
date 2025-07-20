@@ -167,14 +167,12 @@ tfoot td {
     width: 1.15rem;
     height: 1.15rem;
     margin-left: 0.35rem;
-    border: 1.5px solid var(--accent);
+    border: 1px solid var(--accent);
     border-radius: 50%;
     background: var(--bg);
     cursor: help;
-    vertical-align: middle;
     user-select: none;
 }
-
 .info::before {
     content: 'i';
     font-family: inherit;
@@ -183,10 +181,13 @@ tfoot td {
     line-height: 1;
     color: var(--accent);
 }
-
 .info .tooltip {
-    max-width: 480px;
-    min-width: 360px;
+    overflow-wrap: normal;
+    max-width: 90vw;
+    padding: .45rem .7rem;
+    position: absolute;
+    display: inline-block;
+    width: max-content;
     text-align: left;
     visibility: hidden;
     opacity: 0;
@@ -200,16 +201,14 @@ tfoot td {
     border: 1px solid var(--border);
     border-radius: var(--radius);
     font-size: 0.8rem;
-    white-space: pre-line;
+    white-space: pre;
     z-index: 10;
     transition: opacity 0.2s ease;
 }
-
 .info:hover .tooltip {
     visibility: visible;
     opacity: 1;
 }
-
 .info .tooltip::after {
     content: '';
     position: absolute;
@@ -352,7 +351,7 @@ th.sellHead {
     background: #303336;
 }
 .arrow {
-    margin-left: 0.25rem;
+    margin-right: 0.25rem;
     font-size: 0.75rem;
     opacity: 0.8;
 }

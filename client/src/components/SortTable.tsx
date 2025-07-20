@@ -53,9 +53,9 @@ export default function SortableTable<T extends RowObj>({
                                     active ? `sorted-${dir}` : '',
                                 ].join(' ').trim()}
                                 onClick={sortable ? () => requestSort(key) : undefined}
-                            >
-                                {label}
+                            >   
                                 {sortable && <Arrow active={active} dir={dir} />}
+                                {label}
                             </th>
                         );
                     })}
