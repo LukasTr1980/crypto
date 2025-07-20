@@ -19,10 +19,16 @@ jobs:
 
             - name: Read version from package.json
               id: pkg
-              run: echo "version=$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
+              shell: bash
+              run: |
+                set -euo pipefail
+                VERSION=$(node -p "require('./package.json').version")
+                echo "version=$VERSION" >> "$GITHUB_OUTPUT
 
             - name: Validate tag vs package.json
+              shell: bash
               run: |
+                set -euo pipefail
                 TAG_VERSION="${GITHUB_REF_NAME#v}"
                 PKG_VERSION="${{ steps.pkg.outputs.version }}"
                 if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
@@ -34,17 +40,23 @@ jobs:
               run: echo "${{ secrets.REGISTRY_PASS }}" | docker login registry.charts.cx -u "${{ secrets.REGISTRY_USER }}" --password-stdin
 
             - name: Build image
+              shell: bash
               run: |
+                set -euo pipefail
                 VERSION="${{ steps.pkg.outputs.version }}"
                 docker build -t registry.charts.cx/crypto:${VERSION} .
 
             - name: Push image
+              shell: bash
               run: |
+                set- euo pipefail
                 VERSION="${{ steps.pkg.outputs.version }}"
                 docker push registry.charts.cx/crypto:${VERSION}
 
             - name: Show digest
+              shell: bash
               run: |
+                set -euo pipefail
                 VERSION="${{ steps.pkg.outputs.version }}"
                 DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' registry.charts.cx/crypto:${VERSION})
                 echo "Image Digest: ${DIGEST}"
