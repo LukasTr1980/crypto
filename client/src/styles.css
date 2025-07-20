@@ -344,3 +344,23 @@ th.sellHead {
     font-size: 1rem;
     line-height: 1.45;
 }
+.sortable-header {
+    cursor: pointer;
+    user-select: none;
+}
+.sortable-header:hover {
+    background: #303336;
+}
+.arrow {
+    margin-left: 0.25rem;
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+.arrow::before { content: ''; }
+.arrow-none::before { content: '▢'; }
+.arrow-up::before { content: '▲'; }
+.arrow-down::before { content: '▼'; }
+.sorted-asc,
+.sorted-desc {
+    color: var(--accent);
+}

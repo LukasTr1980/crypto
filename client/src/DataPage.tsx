@@ -3,6 +3,7 @@ import { fmt, fmtEuro } from "./utils/fmt";
 import { dt } from "./utils/dt";
 import Notes from "./Notes";
 import { apiUrl } from "./utils/api";
+import AssetValueTable from "./components/AssetValueTable";
 
 export interface AssetValue {
     asset: string;
@@ -90,45 +91,6 @@ export interface AllData {
     cached: boolean;
     generatedAt: number;
 }
-
-const AssetValueTable = ({ assets }: { assets: AssetValue[] }) => {
-    if (!assets || assets.length === 0) {
-        return (
-            <section>
-                <h2>Calculated Assets Value</h2>
-                <p>No assets values could be calculated</p>
-            </section>
-        );
-    }
-
-    return (
-        <section>
-            <h2>Calculated Assets Value</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Assets</th>
-                        <th className="num">Balance</th>
-                        <th className="num">MarketPrice (€)</th>
-                        <th className="num">Value (€)</th>
-                        <th className="num">% of Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {assets.map(a => (
-                        <tr key={a.asset}>
-                            <td>{a.asset}</td>
-                            <td className="num">{fmt(a.balance, 8)}</td>
-                            <td className="num">{fmtEuro(a.priceInEur, 2)}</td>
-                            <td className="num">{fmtEuro(a.eurValue, 2)}</td>
-                            <td className="num">{fmt(a.sharePct, 2)} %</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </section>
-    );
-};
 
 const BalanceExTable = ({ balanceData }: { balanceData: Record<string, { balance: string; hold_trade: string; }> }) => {
     const sortedEntries = Object.entries(balanceData)
