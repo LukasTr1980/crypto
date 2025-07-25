@@ -4,6 +4,7 @@ import { dt } from "./utils/dt";
 import Notes from "./Notes";
 import { apiUrl } from "./utils/api";
 import AssetValueTable from "./components/AssetValueTable";
+import ProfitTable from "./components/ProfitTable";
 
 export interface AssetValue {
     asset: string;
@@ -388,75 +389,6 @@ const FundingSummaryTable = (
                         );
                     })}
                 </tbody>
-            </table>
-        </section>
-    );
-};
-
-const ProfitTable = ({ stats, totals }: { stats: Record<string, PnlStats>, totals: PnlStats }) => {
-    const assets = Object.keys(stats).sort();
-    if (!assets.length) return null;
-
-    const cls = (v: number) => (v >= 0 ? 'gain' : 'loss');
-
-    return (
-        <section>
-            <h2>Realized / Unrealized per Coin</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Asset</th>
-                        <th className="num">
-                            Invested
-                            <Info text={"Buys – Sells (net cash flow)"} />
-                            </th>
-                        <th className="num">
-                            Realized
-                            <Info text={"Gain / Loss on SOLD Coins"} />
-                            </th>
-                        <th className="num">
-                            Unrealized
-                            <Info text={
-                                "Market value of current coins – cost basis\n" +
-                                "Cost basis = current balance × avg. buy price"
-                            }
-                            />
-                            </th>
-                        <th className="num">
-                            Total
-                            <Info text={"Realized + Unrealized"} />
-                            </th>
-                        <th className="num">
-                            Total %
-                            <Info text={"Total / Invested"} />
-                            </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {assets.map(a => {
-                        const s = stats[a];
-                        return (
-                            <tr key={a}>
-                                <td>{a}</td>
-                                <td className="num">{fmtEuro(s.investedEur)}</td>
-                                <td className={`num ${cls(s.realizedEur)}`}>{fmtEuro(s.realizedEur)}</td>
-                                <td className={`num ${cls(s.unrealizedEur)}`}>{fmtEuro(s.unrealizedEur)}</td>
-                                <td className={`num ${cls(s.totalEur)}`}>{fmtEuro(s.totalEur)}</td>
-                                <td className={`num ${cls(s.totalPct)}`}>{fmt(s.totalPct, 2)} %</td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td><strong>Total</strong></td>
-                        <td className="num"><strong>{fmtEuro(totals.investedEur)}</strong></td>
-                        <td className={`num ${cls(totals.realizedEur)}`}><strong>{fmtEuro(totals.realizedEur)}</strong></td>
-                        <td className={`num ${cls(totals.unrealizedEur)}`}><strong>{fmtEuro(totals.unrealizedEur)}</strong></td>
-                        <td className={`num ${cls(totals.totalEur)}`}><strong>{fmtEuro(totals.totalEur)}</strong></td>
-                        <td className={`num ${cls(totals.totalPct)}`}><strong>{fmt(totals.totalPct, 2)} %</strong></td>
-                    </tr>
-                </tfoot>
             </table>
         </section>
     );

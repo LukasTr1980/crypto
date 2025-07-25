@@ -13,6 +13,7 @@ interface Props<T extends RowObj> {
         sortable?: boolean;
     }>;
     initialSort?: SortConfig<T>;
+    footer?: T;
 }
 
 function Arrow({
@@ -32,7 +33,8 @@ function Arrow({
 export default function SortableTable<T extends RowObj>({
     data,
     columns,
-    initialSort
+    initialSort,
+    footer,
 }: Props<T>) {
     const { sorted, sort, requestSort } = useSort(data, initialSort);
 
@@ -72,6 +74,20 @@ export default function SortableTable<T extends RowObj>({
                     </tr>
                 ))}
             </tbody>
+            {footer && (
+                <tfoot>
+                    <tr>
+                        {columns.map(({ key, numeric, render }) => (
+                            <td
+                                key={String(key)}
+                                className={numeric ? 'num' : undefined}
+                                >
+                                    {render ? render(footer) : (footer as any)[key]}
+                                </td>
+                        ))}
+                    </tr>
+                </tfoot>
+            )}
         </table>
     );
 }
