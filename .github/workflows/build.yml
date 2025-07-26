@@ -5,6 +5,13 @@ on:
     tags:
       - "v*"
 
+concurrency:
+  group: crypto-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,9 +23,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Read version from package.json
-        id: pkg
+      - run: npm ci
+      - run: npm test
+
+      - id: pkg
         shell: bash
         run: |
           set -euo pipefail
@@ -26,38 +36,45 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Validate tag vs package.json
-        shell: bash
         run: |
-          set -euo pipefail
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          PKG_VERSION="${{ steps.pkg.outputs.version }}"
-          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-              echo "X Versions-Mismatch: Tag v$TAG_VERSION != package.json $PKG_VERSION"
-              exit 1
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="${{ steps.pkg.outputs.version }}"
+          if [[ "$TAG" != "$PKG" ]]; then
+            echo "::error::Tag v$TAG != package.json $PKG"
+            exit 1
           fi
-          echo "Versionsmatch: $PKG_VERSION"
+          echo "Version: $PKG"
+
       - name: Login to registry
-        run: echo "${{ secrets.REGISTRY_PASS }}" | docker login registry.charts.cx -u "${{ secrets.REGISTRY_USER }}" --password-stdin
-
-      - name: Build image
-        shell: bash
+        env:
+          REGISTRY: registry.charts.cx
         run: |
-          set -euo pipefail
-          VERSION="${{ steps.pkg.outputs.version }}"
-          docker build -t registry.charts.cx/crypto:${VERSION} .
+          echo "${{ secrets.REGISTRY_PASS }}" \
+          | docker login "$REGISTRY" -u "${{ secrets.REGISTRY_USER }}" --password-stdin
 
-      - name: Push image
-        shell: bash
-        run: |
-          set -euo pipefail
-          VERSION="${{ steps.pkg.outputs.version }}"
-          docker push registry.charts.cx/crypto:${VERSION}
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: image=moby/buildkit:latest
 
-      - name: Show digest
-        shell: bash
+      - uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: registry.charts.cx/crypto:${{ steps.pkg.outputs.version }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
+
+      - name: Summary
         run: |
-          set -euo pipefail
-          VERSION="${{ steps.pkg.outputs.version }}"
-          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' registry.charts.cx/crypto:${VERSION})
-          echo "Image Digest: ${DIGEST}"
-          echo "Digest: \`${DIGEST}\`" >> $GITHUB_STEP_SUMMARY
+          echo "### Image Digest" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`${{ steps.build.outputs.digest }}\`" >> "$GITHUB_STEP_SUMMARY"
