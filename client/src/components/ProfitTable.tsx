@@ -23,13 +23,13 @@ const columns = [
     { key: 'asset', label: 'Asset', sortable: false },
     {
         key: 'investedEur',
-        label: <>Invested<Info text="Buys - Sells (net cash flow)" /></>,
+        label: <>Invested<Info text={`Buys - Sells (net cash flow)\nincl. buy & sell fees`} /></>,
         numeric: true,
         render: (r: Row) => fmtEuro(r.investedEur),
     },
     {
         key: 'realizedEur',
-        label: <>Realized<Info text="Gain / Loss on SOLD coins" /></>,
+        label: <>Realized<Info text={`Gain / Loss on SOLD coins\nnet after buy & sell fees`} /></>,
         numeric: true,
         render: (r: Row) => (
             <span className={cls(r.realizedEur)}>{fmtEuro(r.realizedEur)}</span>
@@ -37,7 +37,7 @@ const columns = [
     },
     {
         key: 'unrealizedEur',
-        label: <>Unrealized<Info text="Market value - cost basis of current coins" /></>,
+        label: <>Unrealized<Info text={`Market value - cost basis of current coins\nCost basis = current balance × avg. buy price\n(avg. buy price already incl. buy fees)`} /></>,
         numeric: true,
         render: (r: Row) => (
             <span className={cls(r.unrealizedEur)}>{fmtEuro(r.unrealizedEur)}</span>
@@ -45,7 +45,7 @@ const columns = [
     },
     {
         key: 'totalEur',
-        label: <>Total<Info text="Realized + Unrealized" /></>,
+        label: <>Total<Info text={`Realized + Unrealized\n(all fees already included)`} /></>,
         numeric: true,
         render: (r: Row) => (
             <span className={cls(r.totalEur)}>{fmtEuro(r.totalEur)}</span>
@@ -53,7 +53,7 @@ const columns = [
     },
     {
         key: 'totalPct',
-        label: <>Total %<Info text="Total / Invested" /></>,
+        label: <>Total %<Info text={`Total / Invested\n(all fees already included)`} /></>,
         numeric: true,
         render: (r: Row) => (
             <span className={cls(r.totalPct)}>{fmt(r.totalPct, 2)} %</span>
