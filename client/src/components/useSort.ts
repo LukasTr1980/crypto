@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 
 export type SortDir = 'asc' | 'desc';
 
-export interface SortConfig<T = any> {
+export interface SortConfig<T = unknown> {
     key: keyof T;
     dir: SortDir;
 }
