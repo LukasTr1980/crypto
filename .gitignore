@@ -5,3 +5,4 @@ venv/
 public/main.js
 public/main.js.map
 notes.json
+.eslintcache
