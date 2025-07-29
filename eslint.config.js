@@ -4,15 +4,7 @@ import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
-// ---------------------------------------------------------------------------
-//  ESLint flat‑config for the whole monorepo (root level)
-//  Only the plugins you explicitly wanted: JS base, TypeScript‑ESLint,
-//  React Hooks and Vite React‑Refresh – nothing extra.
-// ---------------------------------------------------------------------------
-
 export default tseslint.config(
-    // -------------------------------------------------
-    // Global ignores
     {
         ignores: [
             '**/node_modules/**',
@@ -21,12 +13,8 @@ export default tseslint.config(
         ],
     },
 
-    // -------------------------------------------------
-    // Base JS rules (apply everywhere unless overridden)
     js.configs.recommended,
 
-    // -------------------------------------------------
-    // ▶ Server  – Node  (TypeScript + CommonJS modules)
     {
         files: ['server/**/*.{ts,tsx,js,cjs,mjs}'],
         languageOptions: {
@@ -49,8 +37,6 @@ export default tseslint.config(
         },
     },
 
-    // -------------------------------------------------
-    // ▶ Client – React (TypeScript + Vite/HMR)
     {
         files: ['client/**/*.{ts,tsx}'],
         languageOptions: {
@@ -80,8 +66,6 @@ export default tseslint.config(
         },
     },
 
-    // -------------------------------------------------
-    // ▶ Plain JS files without TS type‑checking (optional)
     {
         files: ['**/*.{js,mjs,cjs}'],
         extends: [tseslint.configs.disableTypeChecked],

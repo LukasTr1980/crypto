@@ -14,7 +14,7 @@ export interface AssetValue {
     sharePct: number;
 }
 
-export type Ledger = {
+export interface Ledger {
     time: number;
     asset: string;
     type: string;
@@ -25,7 +25,7 @@ export type Ledger = {
     refid: string;
 };
 
-export type TradeBalance = {
+export interface TradeBalance {
     eb: string;
     tb: string;
     m: string;
@@ -37,7 +37,7 @@ export type TradeBalance = {
     ml: string;
 }
 
-export type Trade = {
+export interface Trade {
     time: number;
     pair: string;
     type: 'buy' | 'sell';
@@ -141,7 +141,7 @@ const TradeBalanceTable = ({ tradeBalance }: { tradeBalance: TradeBalance }) => 
         );
     }
 
-    const rowsMap: Array<{ key: keyof TradeBalance; label: string }> = [
+    const rowsMap: { key: keyof TradeBalance; label: string }[] = [
         { key: 'eb', label: 'Equivalent Balance (Equity)' }, { key: 'tb', label: 'Trade Balance (Collateral)' },
         { key: 'm', label: 'Margin Used' }, { key: 'n', label: 'Unrealized P/L' },
         { key: 'c', label: 'Cost Basis of Positions' }, { key: 'v', label: 'Floating Valuation of Positions' },
@@ -176,7 +176,7 @@ const TradeBalanceTable = ({ tradeBalance }: { tradeBalance: TradeBalance }) => 
 };
 
 const TradesHistoryTable = ({ tradesHistory }: { tradesHistory: { trades: Record<string, Trade> } }) => {
-    if (!tradesHistory || !tradesHistory.trades || Object.keys(tradesHistory.trades).length === 0) {
+    if (!tradesHistory?.trades || Object.keys(tradesHistory.trades).length === 0) {
         return (
             <section>
                 <h2>Raw Trade History</h2>
@@ -249,7 +249,7 @@ const LedgersTable = ({ ledgers }: { ledgers: Ledger[] }) => {
                         return (
                             <tr key={`${l.refid}-${idx}`}>
                                 <td>{dt(l.time)}</td><td>{l.asset}</td><td>{l.type}</td>
-                                <td>{l.subtype || '-'}</td>
+                                <td>{l.subtype ?? '-'}</td>
                                 <td className="num">{fmt(parseFloat(l.amount), isEur ? 2 : 8)}</td>
                                 <td className="num">{fmt(parseFloat(l.fee), isEur ? 2 : 8)}</td>
                                 <td className="num">{fmt(parseFloat(l.balance), isEur ? 2 : 8)}</td>
@@ -265,8 +265,8 @@ const LedgersTable = ({ ledgers }: { ledgers: Ledger[] }) => {
 
 const AveragePriceTable = (
     { buyPrices, sellPrices }: {
-        buyPrices: Record<string, AverageBuyPricesStats>,
-        sellPrices: Record<string, AverageSellPricesStats>
+        buyPrices: Record<string, AverageBuyPricesStats>;
+        sellPrices: Record<string, AverageSellPricesStats>;
     }
 ) => {
     const assets = Array.from(
@@ -399,12 +399,13 @@ export default function DataPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        (async () => {
+        void (async () => {
             try {
                 console.info('[DataPage] fetching...');
                 const r = await fetch(apiUrl('all-data'));
                 if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-                setData(await r.json());
+                const payload: AllData = (await r.json()) as AllData;
+                setData(payload);
             } catch (err) {
                 const message = err instanceof Error ? err.message : String(err);
                 setError(message);
