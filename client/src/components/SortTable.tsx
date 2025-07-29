@@ -1,17 +1,19 @@
 import React from "react";
 import { useSort, type SortConfig, type SortDir } from "./useSort";
 
-type RowObj = Record<string, any>;
+type RowObj = Record<string, unknown>;
+
+interface Column<T extends RowObj> {
+    key: keyof T;
+    label: React.ReactNode;
+    numeric?: boolean;
+    render?: (row: T) => React.ReactNode;
+    sortable?: boolean;
+}
 
 interface Props<T extends RowObj> {
-    data: readonly T[];
-    columns: ReadonlyArray<{
-        key: keyof T;
-        label: React.ReactNode;
-        numeric?: boolean;
-        render?: (row: T) => React.ReactNode;
-        sortable?: boolean;
-    }>;
+    data: readonly[];
+    columns: readonly Column<T>[];
     initialSort?: SortConfig<T>;
     footer?: T;
 }
@@ -44,7 +46,7 @@ export default function SortableTable<T extends RowObj>({
                 <tr>
                     {columns.map(({ key, label, numeric, sortable = true }) => {
                         const active = sortable && sort?.key === key;
-                        const dir: SortDir | undefined = active ? sort!.dir : undefined;
+                        const dir: SortDir | undefined = active ? sort.dir : undefined;
 
                         return (
                             <th
@@ -68,7 +70,7 @@ export default function SortableTable<T extends RowObj>({
                     <tr key={idx}>
                         {columns.map(({ key, numeric, render }) => (
                             <td key={String(key)} className={numeric ? 'num' : undefined}>
-                                {render ? render(row) : row[key] as any}
+                                {render ? render(row) : row[key] as React.ReactNode}
                             </td>
                         ))}
                     </tr>
@@ -82,7 +84,7 @@ export default function SortableTable<T extends RowObj>({
                                 key={String(key)}
                                 className={numeric ? 'num' : undefined}
                                 >
-                                    {render ? render(footer) : (footer as any)[key]}
+                                    {render ? render(footer) : (footer[key] as React.ReactNode)}
                                 </td>
                         ))}
                     </tr>
