@@ -1,6 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 import { apiUrl } from "./utils/api";
 
+interface NotesResponse {
+    text: string;
+}
+
 export default function Notes() {
     const [text, setText] = useState('');
     const [status, setStatus] =
@@ -10,14 +14,14 @@ export default function Notes() {
 
     const saveTimer = useRef<number | null>(null);
 
-    const hideLabelTimer = useRef<number | number>(null);
+    const hideLabelTimer = useRef<number | null>(null);
 
     useEffect(() => {
         fetch(apiUrl('notes'))
-            .then(r => r.json())
-            .then(({ text }) => {
-                setText(text);
-                lastSaved.current = text;
+            .then(r => r.json() as Promise<NotesResponse>)
+            .then(({ text: fetchedText }) => {
+                setText(fetchedText);
+                lastSaved.current = fetchedText;
             })
             .catch(() => setStatus('error'));
     }, []);
