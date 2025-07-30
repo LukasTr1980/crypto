@@ -49,13 +49,28 @@ export interface PnlPerAssetResult {
     totals: PnlStats;
 }
 
-function usdToEur(prices: Record<string, any>): number | null {
-    const pairs = ["EURUSD", "USDEUR", "USDZEUR"];
+interface KrakenTicker {
+    c?: [string, string];
+    a?: [string, string];
+    b?: [string, string];
+}
+
+type KrakenTickerMap = Record<string, KrakenTicker>;
+
+function usdToEur(prices: KrakenTickerMap): number | null {
+    const pairs = ['EURUSD', 'USDEUR', 'USDZEUR'] as const;
+
     for (const p of pairs) {
-        if (prices[p])
-            return p === "EURUSD"
-                ? 1 / parseFloat(prices[p].c[0])
-                : parseFloat(prices[p].c[0]);
+        const tick = prices[p];
+        if (!tick) continue;
+
+        const lastStr = tick.c?.[0];
+        if (!lastStr) continue;
+
+        const rate = parseFloat(lastStr);
+        if (!Number.isFinite(rate) || rate === 0) continue;
+
+        return p === 'EURUSD' ? 1 / rate : rate;
     }
     return null;
 }
@@ -63,8 +78,8 @@ function usdToEur(prices: Record<string, any>): number | null {
 function findPriceTicker(
     base: string,
     quote: "EUR" | "USD",
-    prices: Record<string, any>
-): any | null {
+    prices: KrakenTickerMap,
+): string | null {
     const variants = [
         `${base}${quote}`,
         `${base}Z${quote}`,
@@ -82,7 +97,7 @@ function findPriceTicker(
 
 export function calculateAssetsValue(
     account: Record<string, { balance: string }>,
-    prices: Record<string, any>
+    prices: KrakenTickerMap,
 ): CalculatedPortfolio {
     info("[Calculations] Calculating value for all assets...");
 
@@ -96,7 +111,7 @@ export function calculateAssetsValue(
         assetValues.push({
             asset: "EUR",
             balance: eurBalance,
-            priceInEur: 1, // 1 € == 1 €
+            priceInEur: 1,
             eurValue: eurBalance,
             sharePct: 0,
         });
