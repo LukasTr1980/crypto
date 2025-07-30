@@ -55,6 +55,22 @@ interface KrakenTicker {
     b?: [string, string];
 }
 
+interface KrakenTrade {
+    type: 'buy' | 'sell';
+    pair: string;
+    vol: string;
+    cost: string;
+    fee: string;
+}
+
+interface LedgerEntry {
+    refid: string;
+    type: string;
+    asset: string;
+    amount: string;
+    fee?: string;
+}
+
 type KrakenTickerMap = Record<string, KrakenTicker>;
 
 function usdToEur(prices: KrakenTickerMap): number | null {
@@ -186,8 +202,8 @@ export function calculateAssetsValue(
 }
 
 export function calculateAverageBuyPrices(
-    tradesHistory: { trades: Record<string, any> },
-    ledgers: any[]
+    tradesHistory: { trades: Record<string, KrakenTrade> },
+    ledgers: LedgerEntry[]
 ): Record<string, AverageBuyPriceStats> {
     info("[Calculations] Calculating average buy prices...");
     const stats: Record<string, { totalVolume: number; totalCostEur: number; totalFeesEur: number }> = {};
@@ -213,7 +229,7 @@ export function calculateAverageBuyPrices(
         stats[asset].totalFeesEur += fee;
     }
 
-    const groupedByRefId: Record<string, any[]> = {};
+    const groupedByRefId: Record<string, LedgerEntry[]> = {};
     for (const l of ledgers) {
         if (!groupedByRefId[l.refid]) {
             groupedByRefId[l.refid] = [];
