@@ -6,13 +6,23 @@ const DATA_DIR = path.resolve(
 );
 
 const NOTES_FILE =
-    process.env.NOTES_FILE || path.join(DATA_DIR , 'notes.json');
+    process.env.NOTES_FILE ?? path.join(DATA_DIR , 'notes.json');
 
 export async function readNotes(): Promise<string> {
     try {
-        const raw = await fs.readFile(NOTES_FILE, 'utf8');
-        return JSON.parse(raw).text ?? '';
-    } catch (error) {
+        const raw = await fs.readFile(NOTES_FILE, 'utf-8');
+        const parsed: unknown = JSON.parse(raw);
+
+        if (
+            parsed &&
+            typeof parsed === 'object' &&
+            'text' in parsed &&
+            typeof (parsed as { text?: unknown }).text === 'string'
+        ) {
+            return (parsed as { text: string }).text;
+        }
+        return '';
+    } catch  {
         return '';
     }
 }

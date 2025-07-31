@@ -288,7 +288,7 @@ export function calculateAverageBuyPrices(
 }
 
 export function calculateFundingSummary(
-    ledgers: any[]
+    ledgers: LedgerEntry[]
 ): Record<string, FundingSummaryStats> {
     const summary: Record<string, FundingSummaryStats> = {};
 
@@ -297,7 +297,7 @@ export function calculateFundingSummary(
 
         const asset = mapKrakenAsset(l.asset);
         const amount = Math.abs(parseFloat(l.amount));
-        const fee = Math.abs(parseFloat(l.fee) || 0);
+        const fee = Math.abs(parseFloat(l.fee ?? '0'));
 
         if (!summary[asset]) {
             summary[asset] = { totalDeposited: 0, totalWithdrawn: 0, net: 0, fees: 0 };
@@ -317,7 +317,7 @@ export function calculateFundingSummary(
 }
 
 export function calculateAverageSellPrices(
-    tradesHistory: { trades: Record<string, any> }
+    tradesHistory: { trades: Record<string, KrakenTrade> }
 ): Record<string, AverageSellPriceStats> {
     info('[Calculations] Calculating average sell prices...');
 
@@ -359,9 +359,9 @@ export function calculateAverageSellPrices(
 
 export function calculatePnlPerAsset(
     account: Record<string, { balance: string }>,
-    tradesHistory: { trades: Record<string, any> },
-    ledgers: any[],
-    prices: Record<string, any>
+    tradesHistory: { trades: Record<string, KrakenTrade> },
+    ledgers: LedgerEntry[],
+    prices: KrakenTickerMap,
 ): PnlPerAssetResult {
     const buyStats = calculateAverageBuyPrices(tradesHistory, ledgers);
     const sellStats = calculateAverageSellPrices(tradesHistory);
