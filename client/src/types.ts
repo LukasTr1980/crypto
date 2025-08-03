@@ -97,9 +97,9 @@ export interface SortConfig<T = unknown> {
     dir: SortDir;
 }
 
-export type RowObj = Record<string, unknown>;
+export type RowObj = object;
 
-export interface Column<T extends RowObj> {
+export interface Column<T> {
     key: keyof T;
     label: React.ReactNode;
     numeric?: boolean;
@@ -107,7 +107,7 @@ export interface Column<T extends RowObj> {
     sortable?: boolean;
 }
 
-export interface SortTableProps<T extends RowObj> {
+export interface SortTableProps<T> {
     data: readonly T[];
     columns: readonly Column<T>[];
     initialSort?: SortConfig<T>;

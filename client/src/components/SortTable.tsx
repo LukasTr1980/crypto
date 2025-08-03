@@ -1,6 +1,6 @@
 import React from "react";
 import { useSort } from "./useSort";
-import type { SortDir, RowObj, SortTableProps } from "../types";
+import type { SortDir, SortTableProps } from "../types";
 
 function Arrow({
     active,
@@ -16,7 +16,7 @@ function Arrow({
     return <span className={`arrow ${cls}`} aria-hidden="true" />;
 }
 
-export default function SortableTable<T extends RowObj>({
+export default function SortableTable<T extends object>({
     data,
     columns,
     initialSort,

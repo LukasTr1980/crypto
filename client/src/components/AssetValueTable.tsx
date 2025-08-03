@@ -1,8 +1,8 @@
 import SortableTable from "./SortTable";
 import { fmt, fmtEuro } from "../utils/fmt";
-import type { AssetValue } from "../types";
+import type { AssetValue, Column } from "../types";
 
-const columns = [
+const columns: readonly Column<AssetValue>[] = [
     {
         key: 'asset',
         label: 'Asset',
@@ -52,7 +52,7 @@ export default function AssetValueTable({
         <section>
             <h2>Calculated Assets Value</h2>
 
-            <SortableTable
+            <SortableTable<AssetValue>
                 data={assets}
                 columns={columns}
                 initialSort={{ key: 'priceInEur', dir: 'desc' }}
