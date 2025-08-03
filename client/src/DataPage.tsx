@@ -6,14 +6,12 @@ import { apiUrl } from "./utils/api";
 import AssetValueTable from "./components/AssetValueTable";
 import ProfitTable from "./components/ProfitTable";
 import type {
-    AssetValue,
     Ledger,
     TradeBalance,
     Trade,
     AverageBuyPricesStats,
     FundingSummaryStats,
     AverageSellPricesStats,
-    PnlStats,
     AllData,
 } from "./types";
 

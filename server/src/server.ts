@@ -12,16 +12,12 @@ import {
 import { withCache } from './utils/cache';
 import { readNotes, writeNotes } from './notesStorage';
 import {
-    AverageBuyPriceStats,
-    AverageSellPriceStats,
-    FundingSummaryStats,
-    LedgerEntry,
-    KrakenTrade,
-    TradesHistory,
-    AccountBalance,
-    TradeBalance,
-    AllData,
-    NotesBody,
+    type LedgerEntry,
+    type TradesHistory,
+    type AccountBalance,
+    type TradeBalance,
+    type AllData,
+    type NotesBody,
 } from './types';
 
 const app = express();

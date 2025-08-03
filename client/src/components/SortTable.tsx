@@ -1,6 +1,6 @@
 import React from "react";
 import { useSort } from "./useSort";
-import type { SortConfig, SortDir, RowObj, Column, SortTableProps } from "../types";
+import type { SortDir, RowObj, SortTableProps } from "../types";
 
 function Arrow({
     active,

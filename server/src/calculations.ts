@@ -2,17 +2,16 @@ import { info } from "./utils/logger";
 import { mapKrakenAsset, getTickerBase } from "./utils/assetMapper";
 import { extractPrice } from "./utils/extractPrice";
 import {
-    AssetValue,
-    CalculatedPortfolio,
-    AverageBuyPriceStats,
-    FundingSummaryStats,
-    AverageSellPriceStats,
-    PnlStats,
-    PnlPerAssetResult,
-    KrakenTicker,
-    KrakenTrade,
-    LedgerEntry,
-    KrakenTickerMap,
+    type AssetValue,
+    type CalculatedPortfolio,
+    type AverageBuyPriceStats,
+    type FundingSummaryStats,
+    type AverageSellPriceStats,
+    type PnlStats,
+    type PnlPerAssetResult,
+    type KrakenTrade,
+    type LedgerEntry,
+    type KrakenTickerMap,
 } from "./types";
 
 function usdToEur(prices: KrakenTickerMap): number | null {

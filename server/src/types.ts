@@ -74,7 +74,7 @@ export interface PriceQuote {
     ts: string;
 }
 
-export type CacheEntry<T> = { value: T; ts: number };
+export interface CacheEntry<T> { value: T; ts: number };
 
 export interface TradesHistory {
     trades: Record<string, KrakenTrade>;
@@ -99,3 +99,7 @@ export interface AllData {
 }
 
 export interface NotesBody { text?: string }
+
+export type LogArgs = unknown[];
+export type ConsoleMethod = (...args: LogArgs) => void;
+export type ColorFn = (msg: string) => string;
