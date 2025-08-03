@@ -1,5 +1,5 @@
 import { info } from "./logger";
-import { CacheEntry } from "../types";
+import { type CacheEntry } from "../types";
 
 export function withCache<T>(ttlMs: number, fn: () => Promise<T>) {
     let entry: CacheEntry<T> | null = null;
