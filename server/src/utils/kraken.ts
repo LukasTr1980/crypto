@@ -6,7 +6,7 @@ import { hmac } from '@noble/hashes/hmac';
 import { base64 } from '@scure/base';
 import { nextNonce } from './nonce';
 import { info, error } from './logger';
-import type { 
+import type {
     LedgerEntry,
     KrakenTrade,
     KrakenTickerMap,
@@ -59,9 +59,9 @@ async function doKrakenPost<T>(path: string, params: URLSearchParams): Promise<T
 
 export function krakenPost<T>(
     path: string,
-    params: URLSearchParams
-): Promise <T> {
-    return privateQueue.add(() => doKrakenPost<T>(path, params));
+    params: URLSearchParams,
+): Promise<T> {
+    return privateQueue.add<T>(() => doKrakenPost<T>(path, params), {throwOnTimeout: true});
 }
 
 export async function fetchAllLedgers(): Promise<LedgerEntry[]> {
@@ -80,7 +80,7 @@ export async function fetchAllLedgers(): Promise<LedgerEntry[]> {
         totalCount = result.count;
         offset += page.length;
         info(`[Kraken] Fetched ${allLedgers.length}/${totalCount} ledgers...`);
-        
+
     } while (offset < totalCount);
     return allLedgers;
 }
@@ -93,7 +93,7 @@ export async function fetchAllTradesHistory(): Promise<{
     let offset = 0;
     let allTrades: KrakenTrade[] = [];
     let totalCount = 0;
-    
+
     do {
         const params = new URLSearchParams({ nonce: nextNonce(), ofs: offset.toString() });
         const result = await krakenPost<KrakenTradesHistoryResponse>('/0/private/TradesHistory', params);

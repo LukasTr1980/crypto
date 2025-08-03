@@ -12,10 +12,7 @@ import {
 import { withCache } from './utils/cache';
 import { readNotes, writeNotes } from './notesStorage';
 import {
-    type LedgerEntry,
     type TradesHistory,
-    type AccountBalance,
-    type TradeBalance,
     type AllData,
     type NotesBody,
 } from './types';
@@ -24,13 +21,17 @@ const app = express();
 const port = process.env.PORT ?? 3000;
 
 const loadAllData = async (): Promise<AllData> => {
-    const ledgers = (await fetchAllLedgers()) as LedgerEntry[];
-    const tradesHistory = (await fetchAllTradesHistory()) as TradesHistory;
-    const accountBalance = (await fetchAccountBalance()) as AccountBalance;
-    const tradeBalance = (await fetchTradeBalance()) as TradeBalance;
+    const ledgers = await fetchAllLedgers();
+    const { trades } = await fetchAllTradesHistory();
+    const tradesHistory: TradesHistory = { trades };
+
+    const accountBalance = await fetchAccountBalance();
+    const tradeBalance = await fetchTradeBalance();
     const prices = await fetchPrices();
+
     const portfolio = calculateAssetsValue(accountBalance, prices);
-    const { perAsset: pnlPerAsset, totals: pnlTotals } = calculatePnlPerAsset(accountBalance, tradesHistory, ledgers, prices);
+    const { perAsset: pnlPerAsset, totals: pnlTotals } =
+        calculatePnlPerAsset(accountBalance, tradesHistory, ledgers, prices);
 
     return {
         accountBalance,
