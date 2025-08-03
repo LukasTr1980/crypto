@@ -1,17 +1,7 @@
 import React from "react";
 import SortableTable from "./SortTable";
 import { fmt, fmtEuro } from '../utils/fmt';
-
-export interface PnlStats {
-    investedEur: number;
-    realizedEur: number;
-    unrealizedEur: number;
-    totalEur: number;
-    totalPct: number;
-}
-interface Row extends PnlStats {
-    asset: string;
-}
+import type { PnlStats, PnlRow } from "../types";
 
 const cls = (v: number) => (v >= 0 ? 'gain' : 'loss');
 
@@ -25,13 +15,13 @@ const columns = [
         key: 'investedEur',
         label: <>Invested<Info text={`Buys - Sells (net cash flow)\nincl. buy & sell fees`} /></>,
         numeric: true,
-        render: (r: Row) => fmtEuro(r.investedEur),
+        render: (r: PnlRow) => fmtEuro(r.investedEur),
     },
     {
         key: 'realizedEur',
         label: <>Realized<Info text={`Gain / Loss on SOLD coins\nnet after buy & sell fees`} /></>,
         numeric: true,
-        render: (r: Row) => (
+        render: (r: PnlRow) => (
             <span className={cls(r.realizedEur)}>{fmtEuro(r.realizedEur)}</span>
         ),
     },
@@ -39,7 +29,7 @@ const columns = [
         key: 'unrealizedEur',
         label: <>Unrealized<Info text={`Market value - cost basis of current coins\nCost basis = current balance × avg. buy price\n(avg. buy price already incl. buy fees)`} /></>,
         numeric: true,
-        render: (r: Row) => (
+        render: (r: PnlRow) => (
             <span className={cls(r.unrealizedEur)}>{fmtEuro(r.unrealizedEur)}</span>
         ),
     },
@@ -47,7 +37,7 @@ const columns = [
         key: 'totalEur',
         label: <>Total<Info text={`Realized + Unrealized\n(all fees already included)`} /></>,
         numeric: true,
-        render: (r: Row) => (
+        render: (r: PnlRow) => (
             <span className={cls(r.totalEur)}>{fmtEuro(r.totalEur)}</span>
         ),
     },
@@ -55,7 +45,7 @@ const columns = [
         key: 'totalPct',
         label: <>Total %<Info text={`Total / Invested\n(all fees already included)`} /></>,
         numeric: true,
-        render: (r: Row) => (
+        render: (r: PnlRow) => (
             <span className={cls(r.totalPct)}>{fmt(r.totalPct, 2)} %</span>
         ),
     },
@@ -68,19 +58,19 @@ export default function ProfitTable({
     stats: Record<string, PnlStats>;
     totals: PnlStats;
 }) {
-    const rows: Row[] = Object.entries(stats)
+    const rows: PnlRow[] = Object.entries(stats)
         .map(([asset, s]) => ({ asset, ...s }))
         .sort((a, b) => b.totalEur - a.totalEur);
 
     if (!rows.length) return null;
 
-    const footer: Row = { asset: 'Total', ...totals };
+    const footer: PnlRow = { asset: 'Total', ...totals };
 
     return (
         <section>
             <h2>Realized / Unrealized per Coin</h2>
 
-            <SortableTable<Row>
+            <SortableTable<PnlRow>
                 data={rows}
                 columns={columns}
                 initialSort={{ key: 'totalEur', dir: 'desc' }}

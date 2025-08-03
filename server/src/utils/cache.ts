@@ -1,9 +1,8 @@
 import { info } from "./logger";
-
-type Entry<T> = { value: T; ts: number };
+import { CacheEntry } from "../types";
 
 export function withCache<T>(ttlMs: number, fn: () => Promise<T>) {
-    let entry: Entry<T> | null = null;
+    let entry: CacheEntry<T> | null = null;
 
     return async (): Promise<T & { cached: boolean }> => {
         const now = Date.now();

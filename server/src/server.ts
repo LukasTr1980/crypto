@@ -8,50 +8,21 @@ import {
     calculateAverageSellPrices,
     calculateFundingSummary,
     calculatePnlPerAsset,
-    type AverageBuyPriceStats,
-    type AverageSellPriceStats,
-    type FundingSummaryStats
 } from './calculations';
 import { withCache } from './utils/cache';
 import { readNotes, writeNotes } from './notesStorage';
-
-interface LedgerEntry {
-    refid: string;
-    type: string;
-    asset: string;
-    amount: string;
-    fee?: string;
-}
-
-interface KrakenTrade {
-    type: 'buy' | 'sell';
-    pair: string;
-    vol: string;
-    cost: string;
-    fee: string;
-}
-
-interface TradesHistory {
-    trades: Record<string, KrakenTrade>;
-}
-
-type AccountBalance = Record<string, { balance: string; hold_trade?: string }>;
-type TradeBalance = Record<string, string>;
-
-interface AllData {
-    accountBalance: AccountBalance;
-    tradeBalance: TradeBalance;
-    tradesHistory: TradesHistory;
-    ledgers: LedgerEntry[];
-    calculatedAssets: ReturnType<typeof calculateAssetsValue>['assets'];
-    totalValueEur: number;
-    averageBuyPrices: Record<string, AverageBuyPriceStats>;
-    averageSellPrices: Record<string, AverageSellPriceStats>;
-    fundingSummary: Record<string, FundingSummaryStats>;
-    profitPerAsset: ReturnType<typeof calculatePnlPerAsset>['perAsset'];
-    profitTotals: ReturnType<typeof calculatePnlPerAsset>['totals']
-    generatedAt: number;
-}
+import {
+    AverageBuyPriceStats,
+    AverageSellPriceStats,
+    FundingSummaryStats,
+    LedgerEntry,
+    KrakenTrade,
+    TradesHistory,
+    AccountBalance,
+    TradeBalance,
+    AllData,
+    NotesBody,
+} from './types';
 
 const app = express();
 const port = process.env.PORT ?? 3000;
@@ -101,8 +72,6 @@ app.get('/api/notes', async (_req, res) => {
     const text = await readNotes();
     res.json({ text });
 });
-
-interface NotesBody { text?: string };
 
 app.post('/api/notes', async (req: Request<unknown, unknown, NotesBody>, res) => {
     await writeNotes(req.body?.text ?? '');

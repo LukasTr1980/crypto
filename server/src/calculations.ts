@@ -1,77 +1,19 @@
 import { info } from "./utils/logger";
 import { mapKrakenAsset, getTickerBase } from "./utils/assetMapper";
 import { extractPrice } from "./utils/extractPrice";
-
-export interface AssetValue {
-    asset: string;
-    balance: number;
-    priceInEur: number;
-    eurValue: number;
-    sharePct: number;
-}
-
-export interface CalculatedPortfolio {
-    assets: AssetValue[];
-    totalValueEur: number;
-}
-
-export interface AverageBuyPriceStats {
-    totalVolume: number;
-    totalCostEur: number;
-    totalFeesEur: number;
-    averagePriceEur: number;
-}
-
-export interface FundingSummaryStats {
-    totalDeposited: number;
-    totalWithdrawn: number;
-    net: number;
-    fees: number;
-}
-
-export interface AverageSellPriceStats {
-    totalVolume: number;
-    totalRevenueEur: number;
-    totalFeesEur: number;
-    averagePriceEur: number;
-}
-
-export interface PnlStats {
-    investedEur: number;
-    realizedEur: number;
-    unrealizedEur: number;
-    totalEur: number;
-    totalPct: number;
-}
-
-export interface PnlPerAssetResult {
-    perAsset: Record<string, PnlStats>;
-    totals: PnlStats;
-}
-
-interface KrakenTicker {
-    c?: [string, string];
-    a?: [string, string];
-    b?: [string, string];
-}
-
-interface KrakenTrade {
-    type: 'buy' | 'sell';
-    pair: string;
-    vol: string;
-    cost: string;
-    fee: string;
-}
-
-interface LedgerEntry {
-    refid: string;
-    type: string;
-    asset: string;
-    amount: string;
-    fee?: string;
-}
-
-type KrakenTickerMap = Record<string, KrakenTicker>;
+import {
+    AssetValue,
+    CalculatedPortfolio,
+    AverageBuyPriceStats,
+    FundingSummaryStats,
+    AverageSellPriceStats,
+    PnlStats,
+    PnlPerAssetResult,
+    KrakenTicker,
+    KrakenTrade,
+    LedgerEntry,
+    KrakenTickerMap,
+} from "./types";
 
 function usdToEur(prices: KrakenTickerMap): number | null {
     const pairs = ['EURUSD', 'USDEUR', 'USDZEUR'] as const;
