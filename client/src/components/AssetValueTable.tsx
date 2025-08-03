@@ -1,13 +1,6 @@
 import SortableTable from "./SortTable";
 import { fmt, fmtEuro } from "../utils/fmt";
-
-export interface AssetValue {
-    asset: string;
-    balance: number;
-    priceInEur: number;
-    eurValue: number;
-    sharePct: number;
-}
+import type { AssetValue } from "../types";
 
 const columns = [
     {

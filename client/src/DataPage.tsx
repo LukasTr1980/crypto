@@ -5,93 +5,17 @@ import Notes from "./Notes";
 import { apiUrl } from "./utils/api";
 import AssetValueTable from "./components/AssetValueTable";
 import ProfitTable from "./components/ProfitTable";
-
-export interface AssetValue {
-    asset: string;
-    balance: number;
-    priceInEur: number;
-    eurValue: number;
-    sharePct: number;
-}
-
-export interface Ledger {
-    time: number;
-    asset: string;
-    type: string;
-    subtype?: string;
-    amount: string;
-    fee: string;
-    balance: string;
-    refid: string;
-};
-
-export interface TradeBalance {
-    eb: string;
-    tb: string;
-    m: string;
-    n: string;
-    c: string;
-    v: string;
-    e: string;
-    mf: string;
-    ml: string;
-}
-
-export interface Trade {
-    time: number;
-    pair: string;
-    type: 'buy' | 'sell';
-    ordertype: string;
-    price: string;
-    vol: string;
-    cost: string;
-    fee: string;
-    ordertxid: string;
-};
-
-export interface AverageBuyPricesStats {
-    totalVolume: number;
-    totalCostEur: number;
-    totalFeesEur: number;
-    averagePriceEur: number;
-}
-
-export interface FundingSummaryStats {
-    totalDeposited: number;
-    totalWithdrawn: number;
-    net: number;
-    fees: number;
-}
-
-export interface AverageSellPricesStats {
-    totalVolume: number;
-    totalRevenueEur: number;
-    totalFeesEur: number;
-    averagePriceEur: number;
-}
-
-export interface PnlStats {
-    investedEur: number;
-    realizedEur: number;
-    unrealizedEur: number;
-    totalEur: number;
-    totalPct: number;
-}
-export interface AllData {
-    accountBalance: Record<string, { balance: string; hold_trade: string }>;
-    tradeBalance: TradeBalance;
-    tradesHistory: { trades: Record<string, Trade> };
-    ledgers: Ledger[];
-    calculatedAssets: AssetValue[];
-    totalValueEur: number;
-    averageBuyPrices: Record<string, AverageBuyPricesStats>;
-    averageSellPrices: Record<string, AverageSellPricesStats>;
-    fundingSummary: Record<string, FundingSummaryStats>;
-    profitPerAsset: Record<string, PnlStats>;
-    profitTotals: PnlStats;
-    cached: boolean;
-    generatedAt: number;
-}
+import type {
+    AssetValue,
+    Ledger,
+    TradeBalance,
+    Trade,
+    AverageBuyPricesStats,
+    FundingSummaryStats,
+    AverageSellPricesStats,
+    PnlStats,
+    AllData,
+} from "./types";
 
 const BalanceExTable = ({ balanceData }: { balanceData: Record<string, { balance: string; hold_trade: string; }> }) => {
     const sortedEntries = Object.entries(balanceData)

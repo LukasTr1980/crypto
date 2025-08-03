@@ -1,11 +1,5 @@
 import { useState, useCallback } from "react";
-
-export type SortDir = 'asc' | 'desc';
-
-export interface SortConfig<T = unknown> {
-    key: keyof T;
-    dir: SortDir;
-}
+import type { SortDir, SortConfig } from "../types";
 
 export function useSort<T extends object>(
     data: readonly T[],

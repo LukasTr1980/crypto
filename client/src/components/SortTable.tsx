@@ -1,22 +1,6 @@
 import React from "react";
-import { useSort, type SortConfig, type SortDir } from "./useSort";
-
-type RowObj = Record<string, unknown>;
-
-interface Column<T extends RowObj> {
-    key: keyof T;
-    label: React.ReactNode;
-    numeric?: boolean;
-    render?: (row: T) => React.ReactNode;
-    sortable?: boolean;
-}
-
-interface Props<T extends RowObj> {
-    data: readonly[];
-    columns: readonly Column<T>[];
-    initialSort?: SortConfig<T>;
-    footer?: T;
-}
+import { useSort } from "./useSort";
+import type { SortConfig, SortDir, RowObj, Column, SortTableProps } from "../types";
 
 function Arrow({
     active,
@@ -37,7 +21,7 @@ export default function SortableTable<T extends RowObj>({
     columns,
     initialSort,
     footer,
-}: Props<T>) {
+}: SortTableProps<T>) {
     const { sorted, sort, requestSort } = useSort(data, initialSort);
 
     return (

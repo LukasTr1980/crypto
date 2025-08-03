@@ -21,10 +21,6 @@ if (!KEY || !SECRET) {
     process.exit(1);
 }
 
-export interface PriceQuote {
-    price: number;
-    ts: string;
-}
 
 function sign(path: string, params: URLSearchParams, secretB64: string): string {
     const nonce = params.get('nonce')!;

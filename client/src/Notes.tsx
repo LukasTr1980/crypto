@@ -1,9 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { apiUrl } from "./utils/api";
-
-interface NotesResponse {
-    text: string;
-}
+import type { NotesResponse } from "./types";
 
 export default function Notes() {
     const [text, setText] = useState('');
