@@ -52,6 +52,8 @@ export interface KrakenTicker {
 }
 
 export interface KrakenTrade {
+    ordertxid: string;
+    postxid: string;
     type: 'buy' | 'sell';
     pair: string;
     vol: string;
@@ -103,3 +105,18 @@ export interface NotesBody { text?: string }
 export type LogArgs = unknown[];
 export type ConsoleMethod = (...args: LogArgs) => void;
 export type ColorFn = (msg: string) => string;
+
+export interface KrakenApiResponse<T> {
+    error: string[];
+    result: T;
+}
+
+export interface KrakenLedgerResponse {
+    ledger: Record<string, LedgerEntry>;
+    count: number;
+}
+
+export interface KrakenTradesHistoryResponse {
+    trades: Record<string, KrakenTrade>;
+    count: number;
+}

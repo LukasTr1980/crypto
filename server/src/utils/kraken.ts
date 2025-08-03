@@ -6,6 +6,16 @@ import { hmac } from '@noble/hashes/hmac';
 import { base64 } from '@scure/base';
 import { nextNonce } from './nonce';
 import { info, error } from './logger';
+import type { 
+    LedgerEntry,
+    KrakenTrade,
+    KrakenTickerMap,
+    AccountBalance,
+    TradeBalance,
+    KrakenApiResponse,
+    KrakenLedgerResponse,
+    KrakenTradesHistoryResponse,
+} from '../types';
 
 if (process.env.NODE_ENV !== 'production') {
     dotenv.config();
@@ -31,7 +41,7 @@ function sign(path: string, params: URLSearchParams, secretB64: string): string 
     return base64.encode(sig);
 }
 
-async function doKrakenPost(path: string, params: URLSearchParams): Promise<any> {
+async function doKrakenPost<T>(path: string, params: URLSearchParams): Promise<T> {
     const headers = {
         "API-Key": KEY,
         "API-Sign": sign(path, params, SECRET!),
@@ -39,7 +49,7 @@ async function doKrakenPost(path: string, params: URLSearchParams): Promise<any>
     } as const;
 
     info(`[Kraken] POST ${path} (Nonce: ${params.get('nonce')})`);
-    const { data } = await axios.post(API_URL + path, params, { headers });
+    const { data } = await axios.post<KrakenApiResponse<T>>(API_URL + path, params, { headers });
     if (data.error?.length) {
         error(`[Kraken] Error: ${data.error.join("; ")}`);
         throw new Error(data.error.join(";"));
@@ -47,93 +57,76 @@ async function doKrakenPost(path: string, params: URLSearchParams): Promise<any>
     return data.result;
 }
 
-export function krakenPost(
+export function krakenPost<T>(
     path: string,
     params: URLSearchParams
-): Promise <any> {
-    return privateQueue.add(() => doKrakenPost(path, params));
+): Promise <T> {
+    return privateQueue.add(() => doKrakenPost<T>(path, params));
 }
 
-export async function fetchAllLedgers(): Promise<any[]> {
+export async function fetchAllLedgers(): Promise<LedgerEntry[]> {
     info('[Kraken] Fetching all ledger entries with pagination...');
     let offset = 0;
-    let allLedgers: any[] = [];
+    let allLedgers: LedgerEntry[] = [];
     let totalCount = 0;
-    let ledgerPage: any[] = [];
 
     do {
         const params = new URLSearchParams({ nonce: nextNonce(), ofs: offset.toString() });
-        const result = await krakenPost('/0/private/Ledgers', params);
+        const result = await krakenPost<KrakenLedgerResponse>('/0/private/Ledgers', params);
 
-        ledgerPage = Object.entries(result.ledger ?? {}).map(([txid, data]) => ({
-            txid,
-            ...(data as Object)
-        }));
-        allLedgers = allLedgers.concat(ledgerPage);
+        const page = Object.entries(result.ledger).map(([txid, l]) => ({ txid, ...l }));
+        allLedgers = allLedgers.concat(page);
 
-        if (totalCount === 0) {
-            totalCount = Number(result.count);
-        }
-
-        offset += ledgerPage.length;
-        if (totalCount > 0) {
-            info(`[Kraken] Fetched ${allLedgers.length} of ${totalCount} ledger entries...`);
-        }
-
-    } while (offset < totalCount && ledgerPage.length > 0);
-
-    info(`[Kraken] Finished fetching. Total ledger entries ${allLedgers.length}`);
+        totalCount = result.count;
+        offset += page.length;
+        info(`[Kraken] Fetched ${allLedgers.length}/${totalCount} ledgers...`);
+        
+    } while (offset < totalCount);
     return allLedgers;
 }
 
-export async function fetchAllTradesHistory(): Promise<any> {
+export async function fetchAllTradesHistory(): Promise<{
+    trades: Record<string, KrakenTrade>;
+    count: number;
+}> {
     info('[Kraken] Fetching all trades history with pagination...');
     let offset = 0;
-    let allTrades: any[] = [];
+    let allTrades: KrakenTrade[] = [];
     let totalCount = 0;
     
     do {
         const params = new URLSearchParams({ nonce: nextNonce(), ofs: offset.toString() });
-        const result = await krakenPost('/0/private/TradesHistory', params);
-        const tradesPage = Object.values(result.trades ?? {});
+        const result = await krakenPost<KrakenTradesHistoryResponse>('/0/private/TradesHistory', params);
 
-        allTrades = allTrades.concat(tradesPage);
+        const page = Object.values(result.trades);
+        allTrades = allTrades.concat(page);
 
-        if (totalCount === 0) {
-            totalCount = Number(result.count);
-        }
-
-        offset += tradesPage.length;
-        if (totalCount > 0) {
-            info(`[Kraken] Fetched ${allTrades.length} of ${totalCount} trades...`);
-        }
+        totalCount = result.count;
+        offset += page.length;
+        info(`[Kraken] Fetched ${allTrades.length}/${totalCount} trades...`);
     } while (offset < totalCount);
 
-    info(`[Kraken] Finished fetching. Total trades: ${allTrades.length}`);
+    const byId: Record<string, KrakenTrade> = {};
+    for (const t of allTrades) byId[`${t.ordertxid}${t.postxid}`] = t;
 
-    const tradesAsObject = allTrades.reduce((obj, trade) => {
-        obj[trade.ordertxid + trade.postxid] = trade;
-        return obj;
-    }, {});
-
-    return { trades: tradesAsObject, count: allTrades.length };
+    return { trades: byId, count: allTrades.length };
 }
 
-export async function fetchAccountBalance(): Promise<Record<string, { balance: string; hold_trade: string; }>> {
+export async function fetchAccountBalance(): Promise<AccountBalance> {
     info('[Kraken] Fetching account balance');
     const params = new URLSearchParams({ nonce: nextNonce() });
-    return krakenPost('/0/private/BalanceEx', params);
+    return krakenPost<AccountBalance>('/0/private/BalanceEx', params);
 }
 
-export async function fetchTradeBalance(): Promise<any> {
+export async function fetchTradeBalance(): Promise<TradeBalance> {
     info('[Kraken] Fetching Trade Balance');
     const params = new URLSearchParams({ nonce: nextNonce() });
-    return krakenPost('/0/private/TradeBalance', params);
+    return krakenPost<TradeBalance>('/0/private/TradeBalance', params);
 }
 
-export async function fetchPrices(): Promise<any> {
+export async function fetchPrices(): Promise<KrakenTickerMap> {
     info('[Kraken] GET /public/Ticker (all pairs)');
-    const { data } = await axios.get(`${API_URL}/0/public/Ticker`);
+    const { data } = await axios.get<KrakenApiResponse<KrakenTickerMap>>(`${API_URL}/0/public/Ticker`);
 
     if (data.error?.length) {
         error(`[Kraken] Ticker error: ${data.error.join("; ")}`);
