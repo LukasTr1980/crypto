@@ -16,14 +16,14 @@
   "license": "ISC",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19.0"
   },
   "dependencies": {
-    "@noble/hashes": "^1.8.0",
-    "@scure/base": "^1.2.6",
+    "@noble/hashes": "^2.0.1",
+    "@scure/base": "^2.0.0",
     "axios": "^1.10.0",
     "chalk": "^5.4.1",
-    "dotenv": "^16.5.0",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "p-queue": "^9.0.0"
   },
@@ -35,5 +35,5 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
-  "version": "1.5.13"
+  "version": "1.5.14"
 }

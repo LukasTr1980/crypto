@@ -1,8 +1,8 @@
 import axios from 'axios';
 import PQueue from 'p-queue';
 import dotenv from 'dotenv';
-import { sha256, sha512 } from '@noble/hashes/sha2';
-import { hmac } from '@noble/hashes/hmac';
+import { sha256, sha512 } from '@noble/hashes/sha2.js';
+import { hmac } from '@noble/hashes/hmac.js';
 import { base64 } from '@scure/base';
 import { nextNonce } from './nonce.js';
 import { info, error } from './logger.js';
@@ -18,7 +18,7 @@ import type {
 } from '../types.js';
 
 if (process.env.NODE_ENV !== 'production') {
-    dotenv.config();
+    dotenv.config({ quiet: true });
 }
 
 const API_URL = 'https://api.kraken.com';

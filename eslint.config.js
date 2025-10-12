@@ -9,7 +9,6 @@ export default tseslint.config(
         ignores: [
             '**/node_modules/**',
             '**/dist/**',
-            'eslint.config.*',
         ],
     },
 
@@ -50,19 +49,20 @@ export default tseslint.config(
             },
         },
         plugins: {
-            reactHooks,
+            'react-hooks': reactHooks,
             reactRefresh,
         },
         extends: [
             tseslint.configs.recommendedTypeChecked,
             tseslint.configs.stylisticTypeChecked,
-            reactHooks.configs['recommended-latest'],
             reactRefresh.configs.vite,
         ],
         rules: {
             '@typescript-eslint/consistent-type-imports': 'error',
             '@typescript-eslint/no-floating-promises': 'error',
             'react-refresh/only-export-components': 'warn',
+            'react-hooks/rules-of-hooks': 'error',
+            'react-hooks/exhaustive-deps': 'warn',
         },
     },
 
