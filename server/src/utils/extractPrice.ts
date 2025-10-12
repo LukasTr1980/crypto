@@ -1,4 +1,4 @@
-import type { KrakenTicker } from "../types";
+import type { KrakenTicker } from "../types.js";
 
 export function extractPrice(ticker?: KrakenTicker | null): number | null {
     if (!ticker) return null;

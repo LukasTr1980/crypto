@@ -1,6 +1,6 @@
-import { info } from "./utils/logger";
-import { mapKrakenAsset, getTickerBase } from "./utils/assetMapper";
-import { extractPrice } from "./utils/extractPrice";
+import { info } from "./utils/logger.js";
+import { mapKrakenAsset, getTickerBase } from "./utils/assetMapper.js";
+import { extractPrice } from "./utils/extractPrice.js";
 import {
     type AssetValue,
     type CalculatedPortfolio,
@@ -12,7 +12,7 @@ import {
     type KrakenTrade,
     type LedgerEntry,
     type KrakenTickerMap,
-} from "./types";
+} from "./types.js";
 
 function usdToEur(prices: KrakenTickerMap): number | null {
     const pairs = ['EURUSD', 'USDEUR', 'USDZEUR'] as const;

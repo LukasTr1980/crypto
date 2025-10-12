@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import type { LogArgs, ColorFn, ConsoleMethod } from "../types";
+import type { LogArgs, ColorFn, ConsoleMethod } from "../types.js";
 
 const nativeConsoleLog: ConsoleMethod = console.log.bind(console);
 const nativeConsoleError: ConsoleMethod = console.error.bind(console);

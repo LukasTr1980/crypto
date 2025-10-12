@@ -4,8 +4,8 @@ import dotenv from 'dotenv';
 import { sha256, sha512 } from '@noble/hashes/sha2';
 import { hmac } from '@noble/hashes/hmac';
 import { base64 } from '@scure/base';
-import { nextNonce } from './nonce';
-import { info, error } from './logger';
+import { nextNonce } from './nonce.js';
+import { info, error } from './logger.js';
 import type {
     LedgerEntry,
     KrakenTrade,
@@ -15,7 +15,7 @@ import type {
     KrakenApiResponse,
     KrakenLedgerResponse,
     KrakenTradesHistoryResponse,
-} from '../types';
+} from '../types.js';
 
 if (process.env.NODE_ENV !== 'production') {
     dotenv.config();
@@ -57,11 +57,8 @@ async function doKrakenPost<T>(path: string, params: URLSearchParams): Promise<T
     return data.result;
 }
 
-export function krakenPost<T>(
-    path: string,
-    params: URLSearchParams,
-): Promise<T> {
-    return privateQueue.add<T>(() => doKrakenPost<T>(path, params), {throwOnTimeout: true});
+export function krakenPost<T>(path: string, params: URLSearchParams): Promise<T> {
+    return privateQueue.add<T>(() => doKrakenPost<T>(path, params));
 }
 
 export async function fetchAllLedgers(): Promise<LedgerEntry[]> {

@@ -1,21 +1,24 @@
 import express, { type Request } from 'express';
-import path from 'path';
-import { info, error } from './utils/logger';
-import { fetchAllLedgers, fetchAllTradesHistory, fetchAccountBalance, fetchTradeBalance, fetchPrices } from './utils/kraken';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { info, error } from './utils/logger.js';
+import { fetchAllLedgers, fetchAllTradesHistory, fetchAccountBalance, fetchTradeBalance, fetchPrices } from './utils/kraken.js';
 import {
     calculateAssetsValue,
     calculateAverageBuyPrices,
     calculateAverageSellPrices,
     calculateFundingSummary,
     calculatePnlPerAsset,
-} from './calculations';
-import { withCache } from './utils/cache';
-import { readNotes, writeNotes } from './notesStorage';
+} from './calculations.js';
+import { withCache } from './utils/cache.js';
+import { readNotes, writeNotes } from './notesStorage.js';
 import {
     type TradesHistory,
     type AllData,
     type NotesBody,
-} from './types';
+} from './types.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const port = process.env.PORT ?? 3000;
@@ -75,7 +78,7 @@ app.post('/api/notes', async (req: Request<unknown, unknown, NotesBody>, res) =>
     res.status(204).end();
 });
 
-app.use(express.static(path.join(__dirname, '..', '..', 'client', 'dist')));
+app.use(express.static(join(__dirname, '..', '..', 'client', 'dist')));
 
 app.listen(port, () => {
     info(`Server running on http://localhost:${port}`);

@@ -1,7 +1,7 @@
-import { info } from "./logger";
-import { type CacheEntry } from "../types";
+import { info } from "./logger.js";
+import { type CacheEntry } from "../types.js";
 
-export function withCache<T>(ttlMs: number, fn: () => Promise<T>) {
+export function withCache<T extends object>(ttlMs: number, fn: () => Promise<T>) {
     let entry: CacheEntry<T> | null = null;
 
     return async (): Promise<T & { cached: boolean }> => {
@@ -9,7 +9,7 @@ export function withCache<T>(ttlMs: number, fn: () => Promise<T>) {
 
         if (entry && now - entry.ts < ttlMs) {
             info('[Cache] HIT');
-            return { ...entry.value, cached: true }
+            return { ...entry.value, cached: true };
         }
 
         info('[Cache] MISS');
